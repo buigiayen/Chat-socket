@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- https://go.microsoft.com/fwlink/?LinkID=208121. -->
+<Project>
+  <PropertyGroup>
+    <_PublishTargetUrl>D:\project\Server-chat\bin\Release\net9.0\publish\</_PublishTargetUrl>
+    <History>True|2025-06-23T09:50:22.7827202Z||;True|2025-06-23T16:49:03.9070737+07:00||;True|2025-06-23T16:45:21.7095772+07:00||;True|2025-06-23T16:25:14.5578036+07:00||;True|2025-06-23T16:17:28.7748106+07:00||;True|2025-06-23T16:15:16.3294514+07:00||;True|2025-06-23T16:09:34.1906080+07:00||;True|2025-06-23T15:56:37.6418022+07:00||;True|2025-06-23T15:47:05.8221174+07:00||;True|2025-06-23T15:31:09.2488451+07:00||;True|2025-06-23T15:23:35.8728129+07:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+</Project>
