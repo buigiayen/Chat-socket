@@ -3,53 +3,83 @@ import {
   Bubble,
   Conversation,
   Conversations,
+  ConversationsProps,
   Sender,
   Suggestion,
   XProvider,
 } from "@ant-design/x";
-import { Button, Card, Divider, Flex } from "antd";
-import React from "react";
-
 import {
-  AlipayCircleOutlined,
-  GithubOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
+  Avatar,
+  Card,
+  Divider,
+  Flex,
+  GetProp,
+  Image,
+  Input,
+  Skeleton,
+  theme,
+} from "antd";
+import React from "react";
 import { useSignalR } from "@/hook/signalr";
 import { BubbleDataType } from "@ant-design/x/es/bubble/BubbleList";
+import { useQuery } from "@tanstack/react-query";
+import { getItemUserCenter } from "@/services/users/user.services";
 
 export const ChatUI = () => {
   const [value, setValue] = React.useState("");
   const [sendUserConnectionID, setSendUserConnectionID] = React.useState<
     string | null
   >(null);
-  const [BubbleDataType, setBubbleDataType] = React.useState<BubbleDataType[]>(
-    []
-  );
+  const [BubbleDataType, setBubbleDataType] =
+    React.useState<BubbleDataType[]>();
 
-  const [conversations, setConversations] = React.useState<Conversation[]>([]);
-  const connectionRef = useSignalR("https://localhost:7092/chathub", () => {
-    console.log("SignalR connected");
+  const [conversations, setConversations] = React.useState<
+    GetProp<ConversationsProps, "items">
+  >([]);
+
+  const connectionRef = useSignalR();
+  const { token } = theme.useToken();
+
+  // Customize the style of the container
+  const style = {
+    width: 280,
+    height: 600,
+    background: token.colorBgContainer,
+    borderRadius: token.borderRadius,
+    overflow: "auto",
+  };
+  const centerID = "10099";
+  const api = useQuery({
+    queryKey: ["user", centerID],
+    enabled: !!centerID,
+    refetchInterval: 20000,
+    refetchIntervalInBackground: true,
+    gcTime: 2000,
+    networkMode: "online",
+    queryFn: async () => {
+      var response = await getItemUserCenter({ centerID: centerID });
+      const data =
+        response?.map<Conversation>((rs: UserChat.UserCenter, i: number) => ({
+          ...conversations,
+          key: rs.idUser ?? i.toString(),
+          label: rs.name ?? "Unknown",
+          description: `This is connection ${rs.socketID ?? "unknown"}`,
+
+          icon: (
+            <Avatar src="https://img.icons8.com/material/344/user-male-circle--v1.png"></Avatar>
+          ),
+        })) ?? [];
+      setConversations([...data]);
+      return response;
+    },
   });
+
   // Lấy danh sách các kết nối đang truy cập từ SignalR
   React.useEffect(() => {
     if (connectionRef.current) {
       connectionRef.current.on(
         "ReceivedPersonalNotification",
-        (connectionId: string, message: string) => {
-          setBubbleDataType((prev) => [
-            ...prev,
-            {
-              key: Date.now().toString(),
-              content: message,
-              role: "user",
-              placement: "end",
-              avatar: (
-                <AlipayCircleOutlined style={{ fontSize: 24, color: "#08c" }} />
-              ),
-            },
-          ]);
-        }
+        (connectionId: string, message: string) => {}
       );
     }
     // Cleanup listener khi component unmount
@@ -63,20 +93,7 @@ export const ChatUI = () => {
     if (connectionRef.current) {
       connectionRef.current.on(
         "UpdateConnections",
-        (connectionIds: string[]) => {
-          setConversations(
-            connectionIds
-              .filter((id) => id !== connectionRef.current?.connectionId)
-              .map((id) => ({
-                key: id,
-                label: `${
-                  id === connectionRef.current?.connectionId ? "You" : id
-                }`,
-                icon: <UserOutlined />,
-                description: `This is connection ${id}`,
-              }))
-          );
-        }
+        (connectionIds: string[]) => {}
       );
       // Gửi yêu cầu lấy danh sách kết nối khi component mount
       connectionRef.current.invoke("GetConnections");
@@ -104,17 +121,20 @@ export const ChatUI = () => {
 
   return (
     <>
-      <Card styles={{ body: { height: "100%" } }}>
+      <Card styles={{ body: { height: "100%", padding: 0 } }}>
         <XProvider>
           <Flex style={{ height: "calc(100vh - 80px)" }} gap={12}>
-            <Conversations
-              style={{ width: 200 }}
-              defaultActiveKey="1"
-              items={conversations}
-              onActiveChange={(key) => {
-                setSendUserConnectionID(key);
-              }}
-            />
+            <Skeleton loading={api.isLoading}>
+              <Conversations
+                style={style}
+                defaultActiveKey="1"
+                items={conversations}
+                onActiveChange={(key) => {
+                  setSendUserConnectionID(key);
+                }}
+              />
+            </Skeleton>
+
             <Divider type="vertical" style={{ height: "100%" }} />
             <Flex vertical style={{ flex: 1 }} gap={8}>
               <Bubble.List style={{ flex: 1 }} items={BubbleDataType} />
@@ -125,6 +145,7 @@ export const ChatUI = () => {
                 {({ onTrigger, onKeyDown }) => {
                   return (
                     <Sender
+                      disabled={!sendUserConnectionID}
                       value={value}
                       onChange={(nextVal) => {
                         if (nextVal === "/") {
@@ -139,8 +160,8 @@ export const ChatUI = () => {
                         if (!value || !sendUserConnectionID) {
                           return;
                         }
-                        if (connectionRef.current) {
-                          connectionRef.current
+                        if (connectionRef.current?.state === "Connected") {
+                          connectionRef?.current
                             ?.invoke(
                               "SendPrivateMessage",
                               sendUserConnectionID,
@@ -149,12 +170,11 @@ export const ChatUI = () => {
                             .then(() => {
                               console.log("Message sent successfully");
                               setBubbleDataType((prev) => [
-                                ...prev,
                                 {
                                   key: Date.now().toString(),
                                   content: value,
                                   role: "user",
-                                  placement: "start",
+                                  placement: "end",
                                 },
                               ]);
                               setValue("");

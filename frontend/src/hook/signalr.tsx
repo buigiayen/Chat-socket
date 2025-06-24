@@ -2,37 +2,37 @@ import { useEffect, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
 
 export function useSignalR(hubUrl = "/chathub", onConnected?: () => void) {
-    const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const connectionRef = useRef<signalR.HubConnection | null>(null);
+  hubUrl = process.env.NEXT_PUBLIC_URL + "/chathub";
+  useEffect(() => {
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(hubUrl)
+      .configureLogging(signalR.LogLevel.Information)
+      .withAutomaticReconnect()
+      .build();
 
-    useEffect(() => {
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl(hubUrl)
-            .configureLogging(signalR.LogLevel.Information)
-            .withAutomaticReconnect()
-            .build();
+    connectionRef.current = connection;
 
-        connectionRef.current = connection;
+    const start = async () => {
+      try {
+        await connection.start();
+        console.log("SignalR Connected.");
+        onConnected?.();
+      } catch (err) {
+        console.log(err);
+        setTimeout(start, 5000);
+      }
+    };
 
-        const start = async () => {
-            try {
-                await connection.start();
-                console.log("SignalR Connected.");
-                onConnected?.();
-            } catch (err) {
-                console.log(err);
-                setTimeout(start, 5000);
-            }
-        };
+    connection.onclose(start);
 
-        connection.onclose(start);
+    start();
 
-        start();
+    return () => {
+      connection.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hubUrl]);
 
-        return () => {
-            connection.stop();
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [hubUrl]);
-
-    return connectionRef;
+  return connectionRef;
 }

@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Server_chat.vm.user.Response;
+﻿using MediatR;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Server_chat.apis.services;
+using Server_chat.vm.user;
 
 namespace Server_chat.apis
 {
@@ -10,7 +14,7 @@ namespace Server_chat.apis
         {
             var vApi = app.MapGroup("/api/user");
 
-      
+
             vApi.MapGet("/items", GetItems)
                       .WithName("user api")
                       .WithSummary(summary)
@@ -19,25 +23,14 @@ namespace Server_chat.apis
 
             return app;
         }
-        public static async Task<Ok<List<UserResponse>>> GetItems()
+        public static async Task<Results<Ok<IEnumerable<UserResponse>>, ProblemHttpResult>> GetItems([AsParameters]UserRequest userRequest, [AsParameters]UserServices userServices)
         {
-            // Giả sử bạn có một danh sách người dùng đã đăng ký
-            var users = new List<UserResponse>
+            var data = await userServices.Mediator.Send(userRequest);
+            if (!data.Any())
             {
-                new UserResponse
-                {
-                    ToUser = Guid.NewGuid(),
-                    UserName = "user1",
-                    isOnline = true
-                },
-                new UserResponse
-                {
-                    ToUser = Guid.NewGuid(),
-                    UserName = "user2",
-                    isOnline = false
-                }
-            };
-            return TypedResults.Ok(users);
+                return TypedResults.Problem(detail: "Ship order failed to process.", statusCode: 500);
+            }
+            return TypedResults.Ok(data);
         }
     }
 }

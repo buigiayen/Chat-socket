@@ -1,13 +1,28 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Server_chat.contract;
+using Server_chat.domain.Handler;
+using Server_chat.domain.repositories;
 using System.Collections.Concurrent;
 
-public class ChatHub : Hub
+public class ChatHub(ICurrenUserRepositories currenUserRepositories, IUserRepositories userRepositories, IMessageRepositories MessageRepositories) : Hub
 {
-    private static ConcurrentDictionary<string, bool> _connections = new ();
+    private static ConcurrentDictionary<string, string> _connections = new();
     public override async Task OnConnectedAsync()
     {
-        _connections[Context.ConnectionId] = true;
-        Console.WriteLine($"Client connected: {Context.ConnectionId}");
+        var connectionId = Context.ConnectionId;
+        var currenUser = await currenUserRepositories.GetCurrentUserIDAsync();
+        if (currenUser.Item1.HasValue)
+        {
+            string message = string.Format(HubMessage.SendNotificationMessage, currenUser.Item2);
+            await userRepositories.IsUserStateAsync(currenUser.Item1.Value, connectionId, true);
+            await Clients.All.SendAsync(HubConst.NotificationSystem, connectionId, message);
+        }
+        else
+        {
+            await base.OnDisconnectedAsync(new Exception(AuthenticationMessage.NoAuthentication));
+            return;
+        }
+
         await base.OnConnectedAsync();
     }
 
@@ -17,17 +32,24 @@ public class ChatHub : Hub
         await Clients.All.SendAsync(connectionId, message);
     }
 
-    public async Task SendPrivateMessage(string user, string message)
+    public async Task SendPrivateMessage(Guid user, string message)
     {
-        var connectionId = Context.ConnectionId;
-        await Clients.Client(user).SendAsync("ReceivedPersonalNotification", connectionId, message);
+        var currenUser = await currenUserRepositories.GetCurrentUserIDAsync();
+        await MessageRepositories.InsertMessage(new Server_chat.Domain.enities.message { ToUser = user, FromUser = currenUser.Item1.Value, MessageText = message });
+        await Clients.Client(user.ToString()).SendAsync(string.Format(HubMessage.SendUserMessage, user), message);
     }
     public async Task SendPublicMessage(string user, string message)
     {
         var connectionId = Context.ConnectionId;
         await Clients.All.SendAsync("ReceivedPersonalNotification", connectionId, message);
     }
-
+    public async Task SendNotificationMessage()
+    {
+        var connectionId = Context.ConnectionId;
+        var currenUser = await currenUserRepositories.GetCurrentUserIDAsync();
+        string message = string.Format(HubMessage.SendNotificationMessage, currenUser.Item2);
+        await Clients.All.SendAsync(HubConst.NotificationSystem, connectionId, message);
+    }
     public async Task SendMessageToGroup(string groupName, string message)
     {
         var connectionId = Context.ConnectionId;
@@ -35,14 +57,17 @@ public class ChatHub : Hub
     }
     public async Task GetConnections()
     {
-       var connectionIDs = _connections.Keys.ToList();
-       var connectionId = Clients.All.SendAsync("UpdateConnections", connectionIDs);
+        var connectionIDs = _connections.Keys.ToList();
+        var connectionId = Clients.All.SendAsync("UpdateConnections", connectionIDs);
 
     }
     public override async Task OnDisconnectedAsync(Exception? exception = null)
     {
+        var connectionId = Context.ConnectionId;
+        var currenUser = await currenUserRepositories.GetCurrentUserIDAsync();
+        string message = string.Format(HubMessage.SendNotificationMessage, currenUser);
+        await userRepositories.IsUserStateAsync(currenUser.Item1.Value, currenUser.Item2, false);
         _connections.TryRemove(Context.ConnectionId, out _);
-        Console.WriteLine($"Client disconnected: {Context.ConnectionId}");
         await base.OnDisconnectedAsync(exception);
     }
 

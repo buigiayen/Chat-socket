@@ -1,4 +1,6 @@
-﻿namespace Server_chat.vm.message.request
+﻿
+
+namespace Server_chat.vm.message.request
 {
     public sealed class SendMessage
     {
