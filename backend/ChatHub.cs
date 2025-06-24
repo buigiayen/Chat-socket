@@ -3,10 +3,11 @@ using Server_chat.contract;
 using Server_chat.domain.Handler;
 using Server_chat.domain.repositories;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 public class ChatHub(ICurrenUserRepositories currenUserRepositories, IUserRepositories userRepositories, IMessageRepositories MessageRepositories) : Hub
 {
-    private static ConcurrentDictionary<string, string> _connections = new();
+    private static ConcurrentDictionary<string, Guid> _connections = new();
     public override async Task OnConnectedAsync()
     {
         var connectionId = Context.ConnectionId;
@@ -16,6 +17,7 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories, IUserReposi
             string message = string.Format(HubMessage.SendNotificationMessage, currenUser.Item2);
             await userRepositories.IsUserStateAsync(currenUser.Item1.Value, connectionId, true);
             await Clients.All.SendAsync(HubConst.NotificationSystem, connectionId, message);
+            _connections.TryAdd(Context.ConnectionId, currenUser.Item1.Value);
         }
         else
         {

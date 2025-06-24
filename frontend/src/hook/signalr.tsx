@@ -6,7 +6,11 @@ export function useSignalR(hubUrl = "/chathub", onConnected?: () => void) {
   hubUrl = process.env.NEXT_PUBLIC_URL + "/chathub";
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl)
+      .withUrl(hubUrl, {
+        headers: {
+          Authorization: "bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMzY2M2RjOS1lZTg3LTRkZjUtOGQwYi0zZmM3MTYyZmZkMDIiLCJuYW1lIjoiSm9obiBEb2UiLCJhZG1pbiI6dHJ1ZSwiaWF0IjoxNTE2MjM5MDIyfQ.B3rKz92_2GbCfWXrwIfNLkgCW7NCR7rB9un8LfwP1QU",
+        },
+      })
       .configureLogging(signalR.LogLevel.Information)
       .withAutomaticReconnect()
       .build();
