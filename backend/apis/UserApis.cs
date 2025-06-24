@@ -1,8 +1,6 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Server_chat.apis.services;
+using Server_chat.vm.authentication.meet;
 using Server_chat.vm.user;
 
 namespace Server_chat.apis
@@ -21,14 +19,27 @@ namespace Server_chat.apis
                       .WithDescription("Lấy danh sách id đang hoạt động")
                       .WithTags("user");
 
+            vApi.MapPost("/authentication/meet", postAuthenticationTokenAsync)
+                   .WithName("authentication meets")
+                   .WithSummary(summary)
+                   .WithDescription("Gửi tin nhắn trực tiếp")
+                   .WithTags("authentication");
+
             return app;
         }
-        public static async Task<Results<Ok<IEnumerable<UserResponse>>, ProblemHttpResult>> GetItems([AsParameters]UserRequest userRequest, [AsParameters]UserServices userServices)
+
+        public static async Task<Results<Ok<AuthenticationResponse>, ProblemHttpResult>> postAuthenticationTokenAsync([AsParameters] AuthenticationRequest request, [AsParameters] AuthenticationServices services)
+        {
+            var data = await services.Mediator.Send(request);
+            return TypedResults.Ok(data);
+        }
+
+        public static async Task<Results<Ok<IEnumerable<UserResponse>>, ProblemHttpResult>> GetItems([AsParameters] UserRequest userRequest, [AsParameters] UserServices userServices)
         {
             var data = await userServices.Mediator.Send(userRequest);
             if (!data.Any())
             {
-                return TypedResults.Problem(detail: "Ship order failed to process.", statusCode: 500);
+                return TypedResults.Problem(detail: "Không có dữ liệu", statusCode: 400);
             }
             return TypedResults.Ok(data);
         }

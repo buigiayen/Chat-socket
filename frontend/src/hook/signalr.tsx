@@ -3,14 +3,13 @@ import * as signalR from "@microsoft/signalr";
 
 export function useSignalR(hubUrl = "/chathub", onConnected?: () => void) {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
-  hubUrl = process.env.NEXT_PUBLIC_URL + "/chathub";
+  hubUrl =
+    process.env.NEXT_PUBLIC_SOCKET_URL +
+    "/chathub" +
+    "?Authorization=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YWRjNjZiNi1hMTg5LTRiMTQtOGFlYy1iYjg2YjAyZDFlZWMiLCJuYW1lIjoiSm9obiBEb2UiLCJhZG1pbiI6dHJ1ZSwiaWF0IjoxNTE2MjM5MDIyfQ.-hjWYLz4rbw76PxjA48pZaKYDSzAsB_jhmj0M90cbUg";
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
-        headers: {
-          Authorization: "bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMzY2M2RjOS1lZTg3LTRkZjUtOGQwYi0zZmM3MTYyZmZkMDIiLCJuYW1lIjoiSm9obiBEb2UiLCJhZG1pbiI6dHJ1ZSwiaWF0IjoxNTE2MjM5MDIyfQ.B3rKz92_2GbCfWXrwIfNLkgCW7NCR7rB9un8LfwP1QU",
-        },
-      })
+      .withUrl(hubUrl)
       .configureLogging(signalR.LogLevel.Information)
       .withAutomaticReconnect()
       .build();

@@ -3,5 +3,6 @@
     public interface ICurrenUserRepositories
     {
         Task<(Guid?, string)> GetCurrentUserIDAsync();
+        Task<(Guid?, string)> GetCurrentUserSocketAsync();
     }
 }

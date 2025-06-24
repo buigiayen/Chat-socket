@@ -2,7 +2,9 @@
 
 
 using Microsoft.AspNetCore.Http.HttpResults;
-using Server_chat.vm.message.request;
+using Server_chat.apis.services;
+using Server_chat.vm.message;
+using Server_chat.vm.user;
 
 
 namespace Server_chat.apis
@@ -16,21 +18,23 @@ namespace Server_chat.apis
         {
             var vApi = app.MapGroup("/api/message");
 
-            vApi.MapPost("/items", PostItemsByIds)
+            vApi.MapGet("/items", GetItemsByIds)
                          .WithName("message api")
                          .WithSummary(summary)
                          .WithDescription("Gửi tin nhắn trực tiếp")
                          .WithTags("message");
+         
             return app;
         }
 
-        public static Task PostItemsByIds([AsParameters] SendMessage sendMessage)
+        public static async Task<Results<Ok<IEnumerable<MessageResponse>>, ProblemHttpResult>> GetItemsByIds([AsParameters] MessageRequest sendMessage, [AsParameters] MessageServices services)
         {
-
-            return Task.CompletedTask;
+            var data = await services.Mediator.Send(sendMessage);
+         
+            return TypedResults.Ok(data);
         }
 
-       
+
     }
 
 }

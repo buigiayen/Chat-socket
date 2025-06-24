@@ -1,6 +1,10 @@
 import axiosInstance from "@/services/api.services";
 
-export const getLoginToken = async (body: Api.Request) => {
+export const getLoginToken = async (body: {
+  username: string;
+  password: string;
+  code: string;
+}) => {
   return (
     await axiosInstance.post<Api.ApiResponse<UserMeet.UserResponse>>(
       process.env.NEXT_PUBLIC_URL_MEET + "/api/auth/login",

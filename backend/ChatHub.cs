@@ -11,10 +11,10 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories, IUserReposi
     public override async Task OnConnectedAsync()
     {
         var connectionId = Context.ConnectionId;
-        var currenUser = await currenUserRepositories.GetCurrentUserIDAsync();
+        var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
         if (currenUser.Item1.HasValue)
         {
-            string message = string.Format(HubMessage.SendNotificationMessage, currenUser.Item2);
+            string message = string.Format(HubMessage.SendNotificationStartMessage, currenUser.Item2);
             await userRepositories.IsUserStateAsync(currenUser.Item1.Value, connectionId, true);
             await Clients.All.SendAsync(HubConst.NotificationSystem, connectionId, message);
             _connections.TryAdd(Context.ConnectionId, currenUser.Item1.Value);
@@ -36,9 +36,10 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories, IUserReposi
 
     public async Task SendPrivateMessage(Guid user, string message)
     {
-        var currenUser = await currenUserRepositories.GetCurrentUserIDAsync();
+        var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
         await MessageRepositories.InsertMessage(new Server_chat.Domain.enities.message { ToUser = user, FromUser = currenUser.Item1.Value, MessageText = message });
-        await Clients.Client(user.ToString()).SendAsync(string.Format(HubMessage.SendUserMessage, user), message);
+        string toID = await userRepositories.GetConnectionIdAsync(user);
+        await Clients.Client(toID).SendAsync(string.Format(HubMessage.SendUserMessage, toID), message);
     }
     public async Task SendPublicMessage(string user, string message)
     {
@@ -48,8 +49,8 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories, IUserReposi
     public async Task SendNotificationMessage()
     {
         var connectionId = Context.ConnectionId;
-        var currenUser = await currenUserRepositories.GetCurrentUserIDAsync();
-        string message = string.Format(HubMessage.SendNotificationMessage, currenUser.Item2);
+        var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
+        string message = string.Format(HubMessage.SendNotificationStartMessage, currenUser.Item2);
         await Clients.All.SendAsync(HubConst.NotificationSystem, connectionId, message);
     }
     public async Task SendMessageToGroup(string groupName, string message)
@@ -57,17 +58,18 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories, IUserReposi
         var connectionId = Context.ConnectionId;
         await Clients.Group(groupName).SendAsync("ReceiveMessage", connectionId, message);
     }
-    public async Task GetConnections()
+    public async Task GetConnections(string CenterCode)
     {
         var connectionIDs = _connections.Keys.ToList();
-        var connectionId = Clients.All.SendAsync("UpdateConnections", connectionIDs);
+        var socketsID = await userRepositories.GetAllConnectedUserByCenterIDAsync(CenterCode);
+        var connectionId = Clients.All.SendAsync("UpdateConnections", socketsID.Where(p => p.SocketID != null && p.isOnline));
 
     }
     public override async Task OnDisconnectedAsync(Exception? exception = null)
     {
         var connectionId = Context.ConnectionId;
-        var currenUser = await currenUserRepositories.GetCurrentUserIDAsync();
-        string message = string.Format(HubMessage.SendNotificationMessage, currenUser);
+        var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
+        string message = string.Format(HubMessage.SendNotificationOffMessage, currenUser);
         await userRepositories.IsUserStateAsync(currenUser.Item1.Value, currenUser.Item2, false);
         _connections.TryRemove(Context.ConnectionId, out _);
         await base.OnDisconnectedAsync(exception);

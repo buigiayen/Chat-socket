@@ -9,6 +9,7 @@ namespace Server_chat.domain.repositories
         Task<bool> UpdateMessageStatusAsync(Guid messageID, bool isRead);
         Task<message?> GetMessageByIdAsync(Guid messageID);
         Task<bool> InsertMessage(message message);
+        Task<IEnumerable<message>> MessageUser(Guid FromID, Guid ToID, DateTime FromTimeStamp, DateTime ToTimeStamp);
     }
 
 }

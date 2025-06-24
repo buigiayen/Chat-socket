@@ -8,8 +8,9 @@ namespace Server_chat.contract
     }
     public class HubMessage
     {
-        public const string SendNotificationMessage = "Tài khoản {0} Đã truy cập hệ thống";
-        public const string SendUserMessage = "Message_to_{0}";
+        public const string SendNotificationStartMessage = "Tài khoản {0} Đã truy cập hệ thống";
+        public const string SendNotificationOffMessage = "Tài khoản {0} Đã truy cập hệ thống";
+        public const string SendUserMessage = "Message";
 
     }
 }

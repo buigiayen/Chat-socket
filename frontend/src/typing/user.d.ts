@@ -37,7 +37,7 @@ namespace UserMeet {
 }
 namespace UserChat {
   interface UserCenter {
-    idUser: string;
+    userID: string;
     name: string;
     isOnline: boolean;
     centerID: string;

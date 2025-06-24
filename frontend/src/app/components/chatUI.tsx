@@ -10,34 +10,40 @@ import {
 } from "@ant-design/x";
 import {
   Avatar,
+  Badge,
   Card,
   Divider,
   Flex,
   GetProp,
-  Image,
-  Input,
   Skeleton,
   theme,
 } from "antd";
-import React from "react";
+import React, { useEffect } from "react";
 import { useSignalR } from "@/hook/signalr";
 import { BubbleDataType } from "@ant-design/x/es/bubble/BubbleList";
 import { useQuery } from "@tanstack/react-query";
 import { getItemUserCenter } from "@/services/users/user.services";
+import { getMessageByUser } from "@/services/message/message.services";
 
-export const ChatUI = () => {
-  const [value, setValue] = React.useState("");
+export const ChatUI = ({
+  centerID = "10099",
+  FromUserID = "8adc66b6-a189-4b14-8aec-bb86b02d1eec",
+}: {
+  centerID: string;
+  FromUserID: string;
+}) => {
+  const [value, setValue] = React.useState("");//Lưu trữ giá trị tin nhắn dc gửi đi
   const [sendUserConnectionID, setSendUserConnectionID] = React.useState<
-    string | null
-  >(null);
+    string | undefined
+  >(undefined);//Lưu trữ người dùng được chọn để nhắn tin
   const [BubbleDataType, setBubbleDataType] =
-    React.useState<BubbleDataType[]>();
+    React.useState<BubbleDataType[]>();//Lưu trữ người dùng
 
   const [conversations, setConversations] = React.useState<
     GetProp<ConversationsProps, "items">
-  >([]);
+  >([]); //Lưu trữ tin nhắn
 
-  const connectionRef = useSignalR();
+  const connectionRef = useSignalR(); //Khởi tạo signalR
   const { token } = theme.useToken();
 
   // Customize the style of the container
@@ -48,73 +54,98 @@ export const ChatUI = () => {
     borderRadius: token.borderRadius,
     overflow: "auto",
   };
-  const centerID = "10099";
-  const api = useQuery({
-    queryKey: ["user", centerID],
-    enabled: !!centerID,
-    refetchInterval: 20000,
-    refetchIntervalInBackground: true,
-    gcTime: 2000,
-    networkMode: "online",
-    queryFn: async () => {
-      var response = await getItemUserCenter({ centerID: centerID });
-      const data =
-        response?.map<Conversation>((rs: UserChat.UserCenter, i: number) => ({
-          ...conversations,
-          key: rs.idUser ?? i.toString(),
-          label: rs.name ?? "Unknown",
-          description: `This is connection ${rs.socketID ?? "unknown"}`,
+ //Gọi api cho mỗi lần thực hiện hành động
+  const api = {
+    getUser: useQuery({
+      queryKey: ["CenterID", centerID],
+      enabled: !!centerID,
+      refetchInterval: 10000,
+      refetchIntervalInBackground: true,
+      gcTime: 10000,
+      networkMode: "online",
+      queryFn: async () => {
+        var response = await getItemUserCenter({ centerID: centerID });
+        const data =
+          response
+            ?.filter((r) => r.socketID !== connectionRef.current?.connectionId)
+            .map<Conversation>((rs: UserChat.UserCenter, i: number) => ({
+              ...conversations,
+              key: rs.userID ?? i.toString(),
+              label: (
+                <span>
+                  <Badge status={rs.isOnline ? "processing" : "default"} />{" "}
+                  {"  "}
+                  {rs.name}
+                </span>
+              ),
+              description: `This is connection ${rs.socketID ?? "unknown"}`,
+              icon: (
+                <Avatar src="https://img.icons8.com/material/344/user-male-circle--v1.png"></Avatar>
+              ),
+            })) ?? [];
+        setConversations([...data]);
 
-          icon: (
-            <Avatar src="https://img.icons8.com/material/344/user-male-circle--v1.png"></Avatar>
-          ),
-        })) ?? [];
-      setConversations([...data]);
-      return response;
-    },
-  });
+        return response;
+      },
+    }),
+    getMessage: useQuery({
+      queryKey: ["user", sendUserConnectionID],
+      enabled: !!sendUserConnectionID,
+      refetchInterval: 20000,
+      refetchIntervalInBackground: true,
+      gcTime: 2000,
+      networkMode: "online",
+      queryFn: async () => {
+        var response = await getMessageByUser({
+          FromUser: FromUserID,
+          ToUser: sendUserConnectionID,
+        });
+        if (!response || response.length < 0) {
+          setBubbleDataType([]);
+          return;
+        }
+        const mapMessage =
+          response?.map<BubbleDataType>((r: MessageOnline.Message) => ({
+            key: r.messageID?.toString() || Date.now().toString(),
+            content: r.messageText,
+            role: r.fromUser === FromUserID ? "user" : "assistant",
+            placement: r.fromUser === FromUserID ? "end" : "start",
+            avatar: (
+              <Avatar src="https://img.icons8.com/material/344/user-male-circle--v1.png"></Avatar>
+            ),
+          })) ?? [];
+        setBubbleDataType(mapMessage);
+        return response;
+      },
+    }),
+  };
 
-  // Lấy danh sách các kết nối đang truy cập từ SignalR
+  useEffect(() => {
+    api.getMessage.refetch();
+  }, [sendUserConnectionID]);
+
+  //Tải lại người dùng cho mỗi lần kết nối
   React.useEffect(() => {
-    if (connectionRef.current) {
-      connectionRef.current.on(
-        "ReceivedPersonalNotification",
-        (connectionId: string, message: string) => {}
-      );
-    }
-    // Cleanup listener khi component unmount
+    let intervalId: NodeJS.Timeout | null = null;
+    connectionRef.current?.on(`Message`, (message: string) => {
+      setBubbleDataType((prev) => [
+        ...(prev ?? []),
+        {
+          key: Date.now().toString(),
+          content: message,
+          role: "user",
+          placement: "start",
+        },
+      ]);
+    });
+
+    // Cleanup interval khi component unmount
     return () => {
       if (connectionRef.current) {
         connectionRef.current.off("ReceivedPersonalNotification");
       }
-    };
-  }, [connectionRef]);
-  React.useEffect(() => {
-    if (connectionRef.current) {
-      connectionRef.current.on(
-        "UpdateConnections",
-        (connectionIds: string[]) => {}
-      );
-      // Gửi yêu cầu lấy danh sách kết nối khi component mount
-      connectionRef.current.invoke("GetConnections");
-
-      // Thiết lập interval để gọi lại mỗi 10s
-      const intervalId = setInterval(() => {
-        connectionRef.current?.invoke("GetConnections");
-      }, 10000);
-
-      // Cleanup interval khi component unmount
-      return () => {
+      if (intervalId) {
         clearInterval(intervalId);
-        if (connectionRef.current) {
-          connectionRef.current.off("UpdateConnections");
-        }
-      };
-    }
-    // Cleanup listener khi component unmount
-    return () => {
-      if (connectionRef.current) {
-        connectionRef.current.off("UpdateConnections");
       }
     };
   }, [connectionRef]);
@@ -124,7 +155,7 @@ export const ChatUI = () => {
       <Card styles={{ body: { height: "100%", padding: 0 } }}>
         <XProvider>
           <Flex style={{ height: "calc(100vh - 80px)" }} gap={12}>
-            <Skeleton loading={api.isLoading}>
+            <Skeleton loading={api.getUser.isLoading}>
               <Conversations
                 style={style}
                 defaultActiveKey="1"
@@ -168,8 +199,8 @@ export const ChatUI = () => {
                               value
                             )
                             .then(() => {
-                              console.log("Message sent successfully");
                               setBubbleDataType((prev) => [
+                                ...(prev ?? []),
                                 {
                                   key: Date.now().toString(),
                                   content: value,

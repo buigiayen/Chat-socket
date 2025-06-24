@@ -4,7 +4,7 @@ import axios from "axios";
 
 const createAxiosInstance = (baseURL?: string) => {
   const config = axios.create({
-    baseURL: baseURL ?? process.env.NEXT_PUBLIC_URL,
+    baseURL: baseURL ?? process.env.NEXT_PUBLIC_SOCKET_URL,
     withCredentials: true,
     headers: {
       "Content-Type": "application/json",

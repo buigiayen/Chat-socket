@@ -19,6 +19,7 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IUserRepositories, UserRepositories>();
 builder.Services.AddScoped<IMessageRepositories, MessageRepositories>();
 builder.Services.AddTransient<ICurrenUserRepositories, CurrenUserRepositories>();
+builder.Services.AddHttpClient();
 builder.Services.AddSignalR();
 
 
