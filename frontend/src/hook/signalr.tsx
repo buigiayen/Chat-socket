@@ -1,13 +1,15 @@
 import { useEffect, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
+import { useGlobal } from "@/provider/global.Context";
 
 export function useSignalR(hubUrl = "/chathub", onConnected?: () => void) {
+  const global = useGlobal();
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   hubUrl =
     process.env.NEXT_PUBLIC_URL +
     "/chathub" +
     "?Authorization=" +
-    localStorage.getItem("token");
+    localStorage?.getItem("token");
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl)
