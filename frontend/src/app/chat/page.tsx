@@ -2,7 +2,7 @@ import ChatUI from "./components/chatUI";
 
 export default function Home() {
   return (
-    <main className="h-full p-4  ">
+    <main className="h-full  ">
       <ChatUI></ChatUI>
     </main>
   );

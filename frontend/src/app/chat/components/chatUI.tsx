@@ -8,36 +8,28 @@ import {
   Suggestion,
   XProvider,
 } from "@ant-design/x";
-import {
-  Avatar,
-  Badge,
-  Card,
-  Divider,
-  Flex,
-  GetProp,
-  Skeleton,
-  theme,
-} from "antd";
+import { Avatar, Badge, Card, Divider, Flex, GetProp, theme } from "antd";
 import React, { useEffect } from "react";
 import { useSignalR } from "@/hook/signalr";
 import { BubbleDataType } from "@ant-design/x/es/bubble/BubbleList";
 import { useQuery } from "@tanstack/react-query";
 import { getItemUserCenter } from "@/services/users/user.services";
 import { getMessageByUser } from "@/services/message/message.services";
+import { useGlobal } from "@/provider/global.Context";
 
-export const ChatUI = ({
-  centerID = "10099",
-  FromUserID = "8adc66b6-a189-4b14-8aec-bb86b02d1eec",
-}: {
-  centerID: string;
-  FromUserID: string;
-}) => {
-  const [value, setValue] = React.useState("");//Lưu trữ giá trị tin nhắn dc gửi đi
+export const ChatUI = () => {
+  const global = useGlobal();
+  const centerID = global.state.UserInfo?.centerID;
+  const FromUserID = global.state.UserInfo?.user_id;
+  const [value, setValue] = React.useState(""); //Lưu trữ giá trị tin nhắn dc gửi đi
+  const [choosenPerson, setChoosenPerson] =
+    React.useState<UserChat.UserCenter>();
+  const [Persons, setPersons] = React.useState<UserChat.UserCenter[]>();
   const [sendUserConnectionID, setSendUserConnectionID] = React.useState<
     string | undefined
-  >(undefined);//Lưu trữ người dùng được chọn để nhắn tin
+  >(undefined); //Lưu trữ người dùng được chọn để nhắn tin
   const [BubbleDataType, setBubbleDataType] =
-    React.useState<BubbleDataType[]>();//Lưu trữ người dùng
+    React.useState<BubbleDataType[]>(); //Lưu trữ người dùng
 
   const [conversations, setConversations] = React.useState<
     GetProp<ConversationsProps, "items">
@@ -48,13 +40,11 @@ export const ChatUI = ({
 
   // Customize the style of the container
   const style = {
-    width: 280,
-    height: 600,
     background: token.colorBgContainer,
     borderRadius: token.borderRadius,
     overflow: "auto",
   };
- //Gọi api cho mỗi lần thực hiện hành động
+  //Gọi api cho mỗi lần thực hiện hành động
   const api = {
     getUser: useQuery({
       queryKey: ["CenterID", centerID],
@@ -72,19 +62,19 @@ export const ChatUI = ({
               ...conversations,
               key: rs.userID ?? i.toString(),
               label: (
-                <span>
-                  <Badge status={rs.isOnline ? "processing" : "default"} />{" "}
-                  {"  "}
+                <span className="text-sm text-gray-800 font-bold">
                   {rs.name}
                 </span>
               ),
               description: `This is connection ${rs.socketID ?? "unknown"}`,
               icon: (
-                <Avatar src="https://img.icons8.com/material/344/user-male-circle--v1.png"></Avatar>
+                <Badge color="green" dot={rs.isOnline}>
+                  <Avatar src="https://img.icons8.com/material/344/user-male-circle--v1.png"></Avatar>
+                </Badge>
               ),
             })) ?? [];
         setConversations([...data]);
-
+        setPersons(response);
         return response;
       },
     }),
@@ -129,15 +119,20 @@ export const ChatUI = ({
     let intervalId: NodeJS.Timeout | null = null;
     connectionRef.current?.on(`Message`, (message: string) => {
       setBubbleDataType((prev) => [
-        ...(prev ?? []),
-        {
-          key: Date.now().toString(),
-          content: message,
-          role: "user",
-          placement: "start",
-        },
+      ...(prev ?? []),
+      {
+        key: Date.now().toString(),
+        content: message,
+        role: "user",
+        placement: "start",
+      },
       ]);
     });
+
+    // Gọi lại API getUser mỗi 1s
+    intervalId = setInterval(() => {
+      api.getUser.refetch();
+    }, 1000);
 
     // Cleanup interval khi component unmount
     return () => {
@@ -155,19 +150,46 @@ export const ChatUI = ({
       <Card styles={{ body: { height: "100%", padding: 0 } }}>
         <XProvider>
           <Flex style={{ height: "calc(100vh - 80px)" }} gap={12}>
-            <Skeleton loading={api.getUser.isLoading}>
-              <Conversations
-                style={style}
-                defaultActiveKey="1"
-                items={conversations}
-                onActiveChange={(key) => {
-                  setSendUserConnectionID(key);
-                }}
-              />
-            </Skeleton>
-
+            <Conversations
+              draggable
+              style={style}
+              defaultActiveKey="1"
+              items={conversations}
+              onActiveChange={(key) => {
+                setSendUserConnectionID(key);
+                setChoosenPerson(Persons?.find((rs) => rs.userID == key));
+              }}
+            />
             <Divider type="vertical" style={{ height: "100%" }} />
             <Flex vertical style={{ flex: 1 }} gap={8}>
+              <div
+                className="p-2 border-b-1 border-gray-200"
+                style={{
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 1,
+                  background: token.colorBgContainer,
+                }}
+              >
+                <Flex align="center" gap={12}>
+                  <Avatar
+                    size={48}
+                    src={
+                      "https://img.icons8.com/material/344/user-male-circle--v1.png"
+                    }
+                  />
+                  <Flex vertical>
+                    <span style={{ fontWeight: "bold", fontSize: 18 }}>
+                      {choosenPerson?.name || "Chọn người trò chuyện"}
+                    </span>
+                    <span className="text-sm text-gray-400">
+                      {choosenPerson?.isOnline
+                        ? "Đang hoạt động"
+                        : "Không hoạt động"}
+                    </span>
+                  </Flex>
+                </Flex>
+              </div>
               <Bubble.List style={{ flex: 1 }} items={BubbleDataType} />
 
               <Suggestion
@@ -220,6 +242,7 @@ export const ChatUI = ({
                   );
                 }}
               </Suggestion>
+              <br></br>
             </Flex>
             <Divider type="vertical" style={{ height: "100%" }} />
           </Flex>

@@ -1,7 +1,12 @@
 namespace Api {
+  export interface ApiResponseMeet<T> {
+    message: string;
+    token: string;
+    userInfo: T;
+  }
   export interface ApiResponse<T> {
     message: string;
-    result: T;
+    data: T;
   }
   export interface ApiResponsePageing<T> {
     message: string;

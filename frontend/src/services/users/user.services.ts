@@ -1,14 +1,13 @@
 import axiosInstance from "@/services/api.services";
 
 export const getLoginToken = async (body: {
-  username: string;
   password: string;
   code: string;
 }) => {
   return (
-    await axiosInstance.post<Api.ApiResponse<UserMeet.UserResponse>>(
-      process.env.NEXT_PUBLIC_URL_MEET + "/api/auth/login",
-      { FormData: body }
+    await axiosInstance.post<UserMeet.UserResponse>(
+      "/api/user/authentication/meet",
+      body
     )
   ).data;
 };

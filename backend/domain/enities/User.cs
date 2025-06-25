@@ -8,6 +8,7 @@
         public bool isActive { get; set; } // Bị khoá hay không
         public string CenterID { get; set; } // Mã trung tâm người dùng
         public string SocketID { get; set; } // socket id của người dùng
+        public int UserMeet { get; set; } // socket id của người dùng
 
     }
 }

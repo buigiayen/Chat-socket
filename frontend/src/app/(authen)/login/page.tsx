@@ -3,8 +3,12 @@ import React from "react";
 import { Form, Input, Button } from "antd";
 import { useMutation } from "@tanstack/react-query";
 import { getLoginToken } from "@/services/users/user.services";
+import { useRouter } from "next/navigation";
+import { useGlobal } from "@/provider/global.Context";
 
 const LoginPage: React.FC = () => {
+  const Router = useRouter();
+  const global = useGlobal();
   const api = {
     login: useMutation({
       mutationKey: ["Login"],
@@ -12,12 +16,22 @@ const LoginPage: React.FC = () => {
       onSuccess: (data) => {},
     }),
   };
-  const onFinish = async (values: {
-    code: string;
-    username: string;
-    password: string;
-  }) => {
-    api.login.mutateAsync(values);
+  const onFinish = async (values: { code: string; password: string }) => {
+    const data = await api.login.mutateAsync(values);
+    console.log(data);
+    if (data.token && data.userInfo) {
+      localStorage.setItem("token", data.token);
+      global.dispatch({
+        type: "SET_INIT",
+        payload: {
+          centerID: values.code,
+          user_meet: data.userInfo.data.id,
+          name: data.userInfo.data.name,
+          user_id: data.userInfo.userID,
+        },
+      });
+      Router.push("/chat");
+    }
   };
 
   return (
@@ -46,14 +60,6 @@ const LoginPage: React.FC = () => {
         >
           <Input placeholder="Enter your username" />
         </Form.Item>
-        <Form.Item
-          label="Tài khoản"
-          name="username"
-          rules={[{ required: true, message: "Xin hãy nhập tài khoán!" }]}
-        >
-          <Input placeholder="Enter your username" />
-        </Form.Item>
-
         <Form.Item
           label="Mật khẩu"
           name="password"

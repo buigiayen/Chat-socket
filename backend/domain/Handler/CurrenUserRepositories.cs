@@ -23,7 +23,7 @@ namespace Server_chat.domain.Handler
 
             if (userIdClaim == null)
                 throw new UnauthorizedAccessException(ErrorConst.ReturnLogin);
-            Guid.TryParse(userIdClaim.Value, out var userId) ;
+            Guid.TryParse(userIdClaim.Value, out var userId);
             var socketCurren = await userRepositories.GetConnectionIdAsync(userId);
 
             return (userId, socketCurren);
@@ -46,11 +46,10 @@ namespace Server_chat.domain.Handler
                 c.Type == contract.AuthenticationConst.SubID);
 
             if (userIdClaim == null)
-                throw new UnauthorizedAccessException(ErrorConst.ReturnLogin);
-            Guid.TryParse(userIdClaim.Value, out var userId);
-            var socketCurren = await userRepositories.GetConnectionIdAsync(userId);
+                return (null, string.Empty);
 
-            return (userId, socketCurren);
+            var socketCurren = await userRepositories.GetUserMeet(userIdClaim.Value);
+            return (socketCurren.UserID, socketCurren.SocketID);
         }
     }
 }

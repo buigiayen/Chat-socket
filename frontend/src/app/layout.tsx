@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { TanstackProvider } from "./provider/tanstack-provider";
+import { TanstackProvider } from "@/provider/tanstack-provider";
+import { GlobalProvider } from "@/provider/global.Context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +30,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <TanstackProvider>
-          <AntdRegistry>{children}</AntdRegistry>
-        </TanstackProvider>
+        <AntdRegistry>
+          <TanstackProvider>
+            <GlobalProvider>{children}</GlobalProvider>
+          </TanstackProvider>
+        </AntdRegistry>
       </body>
     </html>
   );

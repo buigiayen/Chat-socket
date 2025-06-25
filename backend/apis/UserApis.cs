@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Server_chat.apis.services;
 using Server_chat.vm.authentication.meet;
 using Server_chat.vm.user;
@@ -28,7 +29,7 @@ namespace Server_chat.apis
             return app;
         }
 
-        public static async Task<Results<Ok<AuthenticationResponse>, ProblemHttpResult>> postAuthenticationTokenAsync([AsParameters] AuthenticationRequest request, [AsParameters] AuthenticationServices services)
+        public static async Task<Results<Ok<AuthenticationResponse>, ProblemHttpResult>> postAuthenticationTokenAsync([FromBody] AuthenticationRequest request, [AsParameters] AuthenticationServices services)
         {
             var data = await services.Mediator.Send(request);
             return TypedResults.Ok(data);
