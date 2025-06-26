@@ -1,6 +1,7 @@
 ﻿
 
 using Server_chat.Domain.enities;
+using Server_chat.vm.message;
 
 namespace Server_chat.hub
 {
@@ -11,6 +12,7 @@ namespace Server_chat.hub
         Task SendPublicSystem(string message);
         Task UpdateConnections(IEnumerable<User> users);
         Task sync(Guid idChat);
+        Task GetHistoryMessage(IEnumerable<SearchMessageResponse> messageResponses);
 
     }
 }

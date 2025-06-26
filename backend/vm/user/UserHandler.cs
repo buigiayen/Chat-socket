@@ -12,7 +12,7 @@ namespace Server_chat.vm.user
     {
         public async Task<IEnumerable<UserResponse>> Handle(UserRequest request, CancellationToken cancellationToken)
         {
-            var reponse = await userRepositories.GetAllConnectedUserByCenterIDAsync(request.centerID.ToString());
+            var reponse = await userRepositories.GetAllConnectedUserByCenterIDAsync(request.centerID.ToString(), request.CurrenID);
             var map = mapper.Map<IEnumerable<UserResponse>>(reponse);
             return map;
         }

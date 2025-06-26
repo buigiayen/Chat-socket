@@ -5,17 +5,17 @@ namespace Server_chat.domain.Handler
 {
     public class CurrenUserRepositories(IHttpContextAccessor httpContextAccessor, IUserRepositories userRepositories) : ICurrenUserRepositories
     {
-        public async Task<(Guid?, string)> GetCurrentUserIDAsync()
+        public async Task<Guid?> GetCurrentUserIDAsync()
         {
             httpContextAccessor.HttpContext.Request.Headers.TryGetValue("Authorization", out var authHeader);
             var token = authHeader.ToString().Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase).Trim();
 
             if (string.IsNullOrEmpty(token))
-                return (null, string.Empty);
+                return null;
 
             var handler = new JwtSecurityTokenHandler();
             if (!handler.CanReadToken(token))
-                return (null, string.Empty);
+                return null;
 
             var jwtToken = handler.ReadJwtToken(token);
             var userIdClaim = jwtToken.Claims.FirstOrDefault(c =>
@@ -23,10 +23,8 @@ namespace Server_chat.domain.Handler
 
             if (userIdClaim == null)
                 throw new UnauthorizedAccessException(ErrorConst.ReturnLogin);
-            Guid.TryParse(userIdClaim.Value, out var userId);
-            var socketCurren = await userRepositories.GetConnectionIdAsync(userId);
-
-            return (userId, socketCurren);
+            var getCurrenUserMeet = await userRepositories.GetUserMeet(userIdClaim.Value);
+            return getCurrenUserMeet.UserID;
         }
 
         public async Task<(Guid?, string)> GetCurrentUserSocketAsync()

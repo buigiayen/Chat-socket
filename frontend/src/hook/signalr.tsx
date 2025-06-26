@@ -3,7 +3,6 @@ import * as signalR from "@microsoft/signalr";
 import { useGlobal } from "@/provider/global.Context";
 
 export function useSignalR(hubUrl = "/chathub", onConnected?: () => void) {
-  const global = useGlobal();
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   hubUrl =
     process.env.NEXT_PUBLIC_URL +

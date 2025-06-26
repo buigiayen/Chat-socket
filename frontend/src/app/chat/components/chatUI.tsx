@@ -80,14 +80,13 @@ export const ChatUI = () => {
     }),
     getMessage: useQuery({
       queryKey: ["user", sendUserConnectionID],
-      enabled: !!sendUserConnectionID,
+
       refetchInterval: 20000,
       refetchIntervalInBackground: true,
       gcTime: 2000,
       networkMode: "online",
       queryFn: async () => {
         var response = await getMessageByUser({
-          FromUser: FromUserID,
           ToUser: sendUserConnectionID,
         });
         if (!response || response.length < 0) {
@@ -113,37 +112,24 @@ export const ChatUI = () => {
   useEffect(() => {
     api.getMessage.refetch();
   }, [sendUserConnectionID]);
+  useEffect(() => {
+    connectionRef.current?.on(`Message`, (message: string) => {
+      setBubbleDataType((prev) => [
+        ...(prev ?? []),
+        {
+          key: Date.now().toString(),
+          content: message,
+          role: "user",
+          placement: "start",
+        },
+      ]);
+    });
+  }, []);
 
   //Tải lại người dùng cho mỗi lần kết nối
   React.useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-    connectionRef.current?.on(`Message`, (message: string) => {
-      setBubbleDataType((prev) => [
-      ...(prev ?? []),
-      {
-        key: Date.now().toString(),
-        content: message,
-        role: "user",
-        placement: "start",
-      },
-      ]);
-    });
-
-    // Gọi lại API getUser mỗi 1s
-    intervalId = setInterval(() => {
-      api.getUser.refetch();
-    }, 1000);
-
-    // Cleanup interval khi component unmount
-    return () => {
-      if (connectionRef.current) {
-        connectionRef.current.off("ReceivedPersonalNotification");
-      }
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [connectionRef]);
+    api.getUser.refetch();
+  }, []);
 
   return (
     <>

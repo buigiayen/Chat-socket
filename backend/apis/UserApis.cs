@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Server_chat.apis.services;
+using Server_chat.domain.Handler;
 using Server_chat.vm.authentication.meet;
 using Server_chat.vm.user;
 
@@ -15,6 +17,7 @@ namespace Server_chat.apis
 
 
             vApi.MapGet("/items", GetItems)
+                 .RequireAuthorization()
                       .WithName("user api")
                       .WithSummary(summary)
                       .WithDescription("Lấy danh sách id đang hoạt động")
@@ -23,7 +26,7 @@ namespace Server_chat.apis
             vApi.MapPost("/authentication/meet", postAuthenticationTokenAsync)
                    .WithName("authentication meets")
                    .WithSummary(summary)
-                   .WithDescription("Gửi tin nhắn trực tiếp")
+                   .WithDescription("Đăng nhập hệ thống lấy token định danh")
                    .WithTags("authentication");
 
             return app;
@@ -34,9 +37,10 @@ namespace Server_chat.apis
             var data = await services.Mediator.Send(request);
             return TypedResults.Ok(data);
         }
-
+        
         public static async Task<Results<Ok<IEnumerable<UserResponse>>, ProblemHttpResult>> GetItems([AsParameters] UserRequest userRequest, [AsParameters] UserServices userServices)
-        {
+        { 
+            userRequest.CurrenID = await userServices.CurrenUserRepositories.GetCurrentUserIDAsync();
             var data = await userServices.Mediator.Send(userRequest);
             if (!data.Any())
             {

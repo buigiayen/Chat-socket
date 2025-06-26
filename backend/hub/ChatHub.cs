@@ -1,16 +1,17 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.SignalR;
 using Server_chat.contract;
-using Server_chat.domain.Handler;
 using Server_chat.domain.repositories;
-using Server_chat.Domain.enities;
 using Server_chat.hub;
 using Server_chat.vm.authentication.meet;
+using Server_chat.vm.message;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+
 
 public class ChatHub(ICurrenUserRepositories currenUserRepositories,
     IUserRepositories userRepositories,
-    IMessageRepositories MessageRepositories) : Hub<IHub_Message>
+    IMessageRepositories MessageRepositories, 
+    IMapper mapper) : Hub<IHub_Message>
 {
     private static ConcurrentDictionary<string, Guid> _connections = new();
     public override async Task OnConnectedAsync()
@@ -44,7 +45,7 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories,
         string toID = await userRepositories.GetConnectionIdAsync(user);
         await Clients.Client(toID).Message(message);
     }
-   
+
     public async Task SendNotificationMessage()
     {
         var connectionId = Context.ConnectionId;
@@ -52,12 +53,25 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories,
         string message = string.Format(HubMessage.SendNotificationStartMessage, currenUser.Item2);
         await Clients.All.NotificationSystem(connectionId, message);
     }
-   
+
     public async Task GetConnections(string CenterCode)
     {
         var connectionIDs = _connections.Keys.ToList();
-        var socketsID = await userRepositories.GetAllConnectedUserByCenterIDAsync(CenterCode);
+        var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
+        var socketsID = await userRepositories.GetAllConnectedUserByCenterIDAsync(CenterCode, currenUser.Item1);
         var connectionId = Clients.All.UpdateConnections(socketsID.Where(p => p.SocketID != null && p.isOnline));
+    }
+    public async Task GetHistoryMessage(Guid ToUser, DateTime? DateRange)
+    {
+        if (!DateRange.HasValue)
+        {
+            DateRange = DateTime.Now;
+        }
+        var connectionId = Context.ConnectionId;
+        var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
+        var message = await MessageRepositories.MessageUser(currenUser.Item1.Value, ToUser, DateRange.Value.Date, DateRange.Value.AddDays(1).Date);
+        var map = mapper.Map<IEnumerable<SearchMessageResponse>>(message);
+        await Clients.Client(connectionId).GetHistoryMessage(map);
     }
     public override async Task OnDisconnectedAsync(Exception? exception = null)
     {

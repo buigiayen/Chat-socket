@@ -2,7 +2,7 @@
 
 namespace Server_chat.vm.message
 {
-    public class MessageResponse
+    public class SearchMessageResponse
     {
         public Guid messageID { get; set; } // Id của tin nhắn
         public DateTime Timestamp { get; set; } // Thời gian gửi tin nhắn

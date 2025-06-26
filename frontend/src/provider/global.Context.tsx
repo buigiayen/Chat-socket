@@ -19,6 +19,7 @@ function globalReducer(state: State, action: Action): State {
   switch (action.type) {
     case "SET_INIT":
       return { ...state, UserInfo: action.payload };
+
     default:
       return state;
   }

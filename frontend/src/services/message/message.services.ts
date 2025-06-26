@@ -1,7 +1,6 @@
 import axiosInstance from "@/services/api.services";
 
 export const getMessageByUser = async (params: {
-  FromUser?: string;
   ToUser?: string;
   timeRanger?: string;
 }) => {

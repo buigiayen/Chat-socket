@@ -9,7 +9,7 @@ namespace Server_chat.mapper
         public map()
         {
             CreateMap<Server_chat.Domain.enities.User, UserResponse>();
-            CreateMap<Server_chat.Domain.enities.message, MessageResponse>();
+            CreateMap<Server_chat.Domain.enities.message, SearchMessageResponse>();
         }
     }
 }

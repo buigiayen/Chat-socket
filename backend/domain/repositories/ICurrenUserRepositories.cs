@@ -2,7 +2,7 @@
 {
     public interface ICurrenUserRepositories
     {
-        Task<(Guid?, string)> GetCurrentUserIDAsync();
+        Task<Guid?> GetCurrentUserIDAsync();
         Task<(Guid?, string)> GetCurrentUserSocketAsync();
     }
 }

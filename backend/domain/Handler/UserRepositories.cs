@@ -24,10 +24,12 @@ namespace Server_chat.domain.Handler
             var query = await dbConnection.QueryFirstOrDefaultAsync<User>(sql, new { UserID = UserID }) ?? null;
             return query?.SocketID ?? string.Empty;
         }
-        public async Task<IEnumerable<User>> GetAllConnectedUserByCenterIDAsync(string CenterID)
+        public async Task<IEnumerable<User>> GetAllConnectedUserByCenterIDAsync(string CenterID, Guid? UserNotIn)
         {
-            string sql = "SELECT * FROM [User] WHERE CenterID = @CenterID";
-            var query = await dbConnection.QueryAsync<User>(sql, new { CenterID = CenterID });
+            string sql = "SELECT * FROM [User] WHERE CenterID = @CenterID ";
+            if (UserNotIn.HasValue) { sql += " and [UserID] <> @UserNotIn"; }
+             sql += " order by isOnline desc";
+            var query = await dbConnection.QueryAsync<User>(sql, new { CenterID = CenterID, UserNotIn = UserNotIn });
             return query;
 
         }
