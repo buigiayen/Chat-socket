@@ -10,7 +10,7 @@ using System.Collections.Concurrent;
 
 public class ChatHub(ICurrenUserRepositories currenUserRepositories,
     IUserRepositories userRepositories,
-    IMessageRepositories MessageRepositories, 
+    IMessageRepositories MessageRepositories,
     IMapper mapper) : Hub<IHub_Message>
 {
     private static ConcurrentDictionary<string, Guid> _connections = new();
@@ -43,7 +43,7 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories,
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
         await MessageRepositories.InsertMessage(new Server_chat.Domain.enities.message { ToUser = user, FromUser = currenUser.Item1.Value, MessageText = message });
         string toID = await userRepositories.GetConnectionIdAsync(user);
-        await Clients.Client(toID).Message(message);
+        await Clients.Client(toID).Message(Context.ConnectionId, message);
     }
 
     public async Task SendNotificationMessage()

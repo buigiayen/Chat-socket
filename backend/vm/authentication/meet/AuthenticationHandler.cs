@@ -1,16 +1,20 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using Server_chat.domain.enities;
 using Server_chat.domain.repositories;
 
 namespace Server_chat.vm.authentication.meet
 {
-    public class AuthenticationHandler(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUserRepositories userRepositories) : IRequestHandler<AuthenticationRequest, AuthenticationResponse>
+    public class AuthenticationHandler(
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        IUserRepositories userRepositories,
+        ILogger<AuthenticationHandler> logger)
+        : IRequestHandler<AuthenticationRequest, AuthenticationResponse>
     {
         public async Task<AuthenticationResponse> Handle(AuthenticationRequest request, CancellationToken cancellationToken)
         {
-            var client = httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(configuration.GetSection("Url:meet").Value);
-
+            var client = httpClientFactory.CreateClient(contract.EnvConst.URL_MEET);
 
             using var form = new MultipartFormDataContent();
             form.Add(new StringContent(request.password ?? ""), "password");
@@ -20,12 +24,12 @@ namespace Server_chat.vm.authentication.meet
             {
                 Content = form
             };
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("API-KEY", configuration.GetSection("Url:apikey").Value);
+            logger.LogDebug("http request {0}" + System.Text.Json.JsonSerializer.Serialize(client));
 
             using var response = await client.SendAsync(httpRequestMessage, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            logger.LogDebug("http response {0}" + System.Text.Json.JsonSerializer.Serialize(response));
 
+            response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync(cancellationToken);
             var authResponse = System.Text.Json.JsonSerializer.Deserialize<AuthenticationMeet>(responseString, new System.Text.Json.JsonSerializerOptions
             {

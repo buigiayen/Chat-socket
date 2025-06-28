@@ -12,7 +12,6 @@ export function useSignalR(hubUrl = "/chathub", onConnected?: () => void) {
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl)
-      .configureLogging(signalR.LogLevel.Information)
       .withAutomaticReconnect()
       .build();
 

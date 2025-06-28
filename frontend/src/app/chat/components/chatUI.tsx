@@ -113,16 +113,18 @@ export const ChatUI = () => {
     api.getMessage.refetch();
   }, [sendUserConnectionID]);
   useEffect(() => {
-    connectionRef.current?.on(`Message`, (message: string) => {
-      setBubbleDataType((prev) => [
-        ...(prev ?? []),
-        {
-          key: Date.now().toString(),
-          content: message,
-          role: "user",
-          placement: "start",
-        },
-      ]);
+    connectionRef.current?.on(`Message`, (FromID, message: string) => {
+      if (FromID === choosenPerson?.socketID) {
+        setBubbleDataType((prev) => [
+          ...(prev ?? []),
+          {
+            key: Date.now().toString(),
+            content: message,
+            role: "user",
+            placement: "start",
+          },
+        ]);
+      }
     });
   }, []);
 
