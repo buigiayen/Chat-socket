@@ -17,35 +17,68 @@ import { getItemUserCenter } from "@/services/users/user.services";
 import { getMessageByUser } from "@/services/message/message.services";
 import { useGlobal } from "@/provider/global.Context";
 
+// ✅ Thêm interface cho unread messages
+interface UnreadCount {
+  [userId: string]: number;
+}
+
 export const ChatUI = () => {
   const global = useGlobal();
   const centerID = global.state.UserInfo?.centerID;
   const FromUserID = global.state.UserInfo?.user_id;
-  const [value, setValue] = React.useState(""); //Lưu trữ giá trị tin nhắn dc gửi đi
+  const [value, setValue] = React.useState("");
   const [choosenPerson, setChoosenPerson] =
     React.useState<UserChat.UserCenter>();
-
   const [Persons, setPersons] = React.useState<UserChat.UserCenter[]>();
   const [sendUserConnectionID, setSendUserConnectionID] = React.useState<
     string | undefined
-  >(undefined); //Lưu trữ người dùng được chọn để nhắn tin
+  >(undefined);
   const [BubbleDataType, setBubbleDataType] =
-    React.useState<BubbleDataType[]>(); //Lưu trữ người dùng
-
+    React.useState<BubbleDataType[]>();
   const [conversations, setConversations] = React.useState<
     GetProp<ConversationsProps, "items">
-  >([]); //Lưu trữ tin nhắn
+  >([]);
+  const [isChangingUser, setIsChangingUser] = React.useState(false);
 
-  const connectionRef = useSignalR(); //Khởi tạo signalR
+  // ✅ State để lưu trữ số tin nhắn chưa đọc
+  const [unreadCounts, setUnreadCounts] = React.useState<UnreadCount>({});
+
+  // ✅ State để track tin nhắn cuối cùng đã đọc của mỗi user
+  const [lastReadMessages, setLastReadMessages] = React.useState<{
+    [userId: string]: string;
+  }>({});
+
+  const connectionRef = useSignalR();
   const { token } = theme.useToken();
 
-  // Customize the style of the container
   const style = {
     background: token.colorBgContainer,
     borderRadius: token.borderRadius,
     overflow: "auto",
   };
-  //Gọi api cho mỗi lần thực hiện hành động
+
+  // ✅ Hàm để đánh dấu tin nhắn đã đọc
+  const markAsRead = (userId: string) => {
+    setUnreadCounts((prev) => ({
+      ...prev,
+      [userId]: 0,
+    }));
+
+    // Lưu timestamp của tin nhắn cuối cùng đã đọc
+    setLastReadMessages((prev) => ({
+      ...prev,
+      [userId]: Date.now().toString(),
+    }));
+  };
+
+  // ✅ Hàm để tăng số tin nhắn chưa đọc
+  const incrementUnreadCount = (userId: string) => {
+    setUnreadCounts((prev) => ({
+      ...prev,
+      [userId]: (prev[userId] || 0) + 1,
+    }));
+  };
+
   const api = {
     getUser: useQuery({
       queryKey: ["CenterID", centerID],
@@ -63,9 +96,26 @@ export const ChatUI = () => {
               ...conversations,
               key: rs.userID ?? i.toString(),
               label: (
-                <span className="text-sm text-gray-800 font-bold">
-                  {rs.name}
-                </span>
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-sm text-gray-800 font-bold">
+                    {rs.name}
+                  </span>
+                  {/* ✅ Hiển thị số tin nhắn chưa đọc */}
+                  {unreadCounts[rs.userID || ""] > 0 && (
+                    <Badge
+                      count={unreadCounts[rs.userID || ""]}
+                      size="small"
+                      style={{
+                        backgroundColor: "#ff4d4f",
+                        color: "#fff",
+                        fontSize: "10px",
+                        minWidth: "16px",
+                        height: "16px",
+                        lineHeight: "16px",
+                      }}
+                    />
+                  )}
+                </div>
               ),
               description: `This is connection ${rs.socketID ?? "unknown"}`,
               icon: (
@@ -81,19 +131,23 @@ export const ChatUI = () => {
     }),
     getMessage: useQuery({
       queryKey: ["user", sendUserConnectionID],
-
+      enabled: !!sendUserConnectionID,
       refetchInterval: 20000,
       refetchIntervalInBackground: true,
       gcTime: 2000,
       networkMode: "online",
       queryFn: async () => {
+        if (!sendUserConnectionID) return [];
+
         var response = await getMessageByUser({
           ToUser: sendUserConnectionID,
         });
+
         if (!response || response.length < 0) {
           setBubbleDataType([]);
-          return;
+          return [];
         }
+
         const mapMessage =
           response?.map<BubbleDataType>((r: MessageOnline.Message) => ({
             key: r.messageID?.toString() || Date.now().toString(),
@@ -110,27 +164,123 @@ export const ChatUI = () => {
     }),
   };
 
+  // ✅ Xử lý SignalR Message event với unread count
   useEffect(() => {
-    api.getMessage.refetch();
-  }, [sendUserConnectionID]);
-
-  useEffect(() => {
-    connectionRef.current?.on(`Message`, (FromID, message: string) => {
-      if (FromID === choosenPerson?.socketID) {
-        setBubbleDataType((prev) => [
-          ...(prev ?? []),
-          {
-            key: Date.now().toString(),
-            content: message,
-            role: "user",
-            placement: "start",
-          },
-        ]);
+    const cleanup = () => {
+      if (connectionRef.current) {
+        connectionRef.current.off("Message");
       }
-    });
-  }, []);
+    };
 
-  //Tải lại người dùng cho mỗi lần kết nối
+    cleanup();
+
+    if (connectionRef.current) {
+      const playNotificationSound = () => {
+        const audio = new Audio(
+          "https://console.emcvietnam.vn:9000/audio-emc/new-notification-014-363678.mp3"
+        );
+        audio.play().catch(() => {});
+      };
+
+      const handleMessage = (FromID: string, message: string) => {
+        const senderUser = Persons?.find((p) => p.socketID === FromID);
+        const senderUserId = senderUser?.userID;
+
+        if (senderUserId) {
+          // Nếu tin nhắn từ người đang chat
+          if (FromID === choosenPerson?.socketID) {
+            setBubbleDataType((prev) => [
+              ...(prev ?? []),
+              {
+                key: Date.now().toString(),
+                content: message,
+                role: "assistant",
+                placement: "start",
+                avatar: (
+                  <Avatar src="https://img.icons8.com/material/344/user-male-circle--v1.png" />
+                ),
+              },
+            ]);
+            playNotificationSound();
+            // Không tăng unread count vì đang xem tin nhắn
+          } else {
+            playNotificationSound();
+            // ✅ Tăng unread count cho người khác
+            incrementUnreadCount(senderUserId);
+          }
+        }
+      };
+
+      connectionRef.current.on("Message", handleMessage);
+    }
+
+    return cleanup;
+  }, [choosenPerson?.socketID, connectionRef.current, Persons]);
+
+  // ✅ Xử lý khi thay đổi user được chọn
+  useEffect(() => {
+    if (sendUserConnectionID && choosenPerson) {
+      setBubbleDataType([]);
+      api.getMessage.refetch();
+
+      // ✅ Đánh dấu tin nhắn đã đọc khi mở conversation
+      markAsRead(sendUserConnectionID);
+    }
+  }, [sendUserConnectionID, choosenPerson]);
+
+  // ✅ Hàm xử lý thay đổi user với loading state
+  const handleActiveChangeWithLoading = async (key: string) => {
+    if (isChangingUser) return;
+
+    setIsChangingUser(true);
+
+    try {
+      const selectedPerson = Persons?.find((rs) => rs.userID === key);
+
+      if (selectedPerson?.socketID !== choosenPerson?.socketID) {
+        if (connectionRef.current) {
+          connectionRef.current.off("Message");
+        }
+
+        setSendUserConnectionID(key);
+        setChoosenPerson(selectedPerson);
+
+        // ✅ Đánh dấu đã đọc khi chọn user
+        markAsRead(key);
+      }
+    } catch (error) {
+      console.error("Error changing user:", error);
+    } finally {
+      setIsChangingUser(false);
+    }
+  };
+
+  // ✅ Hàm để lấy tổng số tin nhắn chưa đọc
+  const getTotalUnreadCount = () => {
+    return Object.values(unreadCounts).reduce(
+      (total, count) => total + count,
+      0
+    );
+  };
+
+  // ✅ Effect để cập nhật title với số tin nhắn chưa đọc
+  useEffect(() => {
+    const totalUnread = getTotalUnreadCount();
+    const originalTitle = document.title.replace(/^\(\d+\)\s*/, "");
+
+    if (totalUnread > 0) {
+      document.title = `(${totalUnread}) ${originalTitle}`;
+    } else {
+      document.title = originalTitle;
+    }
+
+    // Cleanup khi component unmount
+    return () => {
+      document.title = originalTitle;
+    };
+  }, [unreadCounts]);
+
+  // Tải lại người dùng khi component mount
   React.useEffect(() => {
     api.getUser.refetch();
   }, []);
@@ -145,10 +295,7 @@ export const ChatUI = () => {
               style={style}
               defaultActiveKey="1"
               items={conversations}
-              onActiveChange={(key) => {
-                setSendUserConnectionID(key);
-                setChoosenPerson(Persons?.find((rs) => rs.userID == key));
-              }}
+              onActiveChange={handleActiveChangeWithLoading}
             />
             <Divider type="vertical" style={{ height: "100%" }} />
             <Flex vertical style={{ flex: 1 }} gap={8}>
@@ -178,8 +325,21 @@ export const ChatUI = () => {
                         : "Không hoạt động"}
                     </span>
                   </Flex>
+                  {/* ✅ Hiển thị tổng số tin nhắn chưa đọc */}
+                  {getTotalUnreadCount() > 0 && (
+                    <div className="ml-auto">
+                      <Badge
+                        count={getTotalUnreadCount()}
+                        style={{ backgroundColor: "#1890ff" }}
+                      />
+                      <span className="text-xs text-gray-500 ml-2">
+                        tin nhắn chưa đọc
+                      </span>
+                    </div>
+                  )}
                 </Flex>
               </div>
+
               <Bubble.List style={{ flex: 1 }} items={BubbleDataType} />
 
               <Suggestion
@@ -188,7 +348,7 @@ export const ChatUI = () => {
                 {({ onTrigger, onKeyDown }) => {
                   return (
                     <Sender
-                      disabled={!sendUserConnectionID}
+                      disabled={!sendUserConnectionID || isChangingUser}
                       value={value}
                       onChange={(nextVal) => {
                         if (nextVal === "/") {
@@ -200,7 +360,7 @@ export const ChatUI = () => {
                       }}
                       onKeyDown={onKeyDown}
                       onSubmit={(value) => {
-                        if (!value || !sendUserConnectionID) {
+                        if (!value || !sendUserConnectionID || isChangingUser) {
                           return;
                         }
                         if (connectionRef.current?.state === "Connected") {
@@ -227,7 +387,11 @@ export const ChatUI = () => {
                             });
                         }
                       }}
-                      placeholder='Type "/" to trigger suggestion'
+                      placeholder={
+                        isChangingUser
+                          ? "Đang chọn người dùng..."
+                          : 'Type "/" to trigger suggestion'
+                      }
                     />
                   );
                 }}
@@ -241,4 +405,5 @@ export const ChatUI = () => {
     </>
   );
 };
+
 export default ChatUI;

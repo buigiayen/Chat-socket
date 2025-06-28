@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
-import { useGlobal } from "@/provider/global.Context";
+
 
 export function useSignalR(hubUrl = "/chathub", onConnected?: () => void) {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
