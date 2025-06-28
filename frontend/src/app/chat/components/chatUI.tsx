@@ -24,6 +24,7 @@ export const ChatUI = () => {
   const [value, setValue] = React.useState(""); //Lưu trữ giá trị tin nhắn dc gửi đi
   const [choosenPerson, setChoosenPerson] =
     React.useState<UserChat.UserCenter>();
+
   const [Persons, setPersons] = React.useState<UserChat.UserCenter[]>();
   const [sendUserConnectionID, setSendUserConnectionID] = React.useState<
     string | undefined
@@ -112,6 +113,7 @@ export const ChatUI = () => {
   useEffect(() => {
     api.getMessage.refetch();
   }, [sendUserConnectionID]);
+
   useEffect(() => {
     connectionRef.current?.on(`Message`, (FromID, message: string) => {
       if (FromID === choosenPerson?.socketID) {
