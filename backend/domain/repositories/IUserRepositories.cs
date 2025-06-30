@@ -11,5 +11,6 @@ namespace Server_chat.domain.repositories
         public Task<User> GetUserMeet(string UserIDMeet);
         public Task<IEnumerable<User>> GetAllConnectedUserByCenterIDAsync(string CenterID, Guid? UserNotIn);
         public Task<Guid?> SyncUser(User user);
+      
     }
 }

@@ -69,6 +69,8 @@ namespace Server_chat.domain.Handler
             var query = await dbConnection.QueryFirstOrDefaultAsync<User>(sql, new { UserIDMeet = UserIDMeet });
             return query;
         }
+
+       
     }
 
 }

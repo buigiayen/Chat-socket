@@ -24,10 +24,10 @@ namespace Server_chat.vm.authentication.meet
             {
                 Content = form
             };
-            logger.LogDebug("http request {0}" + System.Text.Json.JsonSerializer.Serialize(client));
+            logger.LogInformation("http request {0}" + System.Text.Json.JsonSerializer.Serialize(client));
 
             using var response = await client.SendAsync(httpRequestMessage, cancellationToken);
-            logger.LogDebug("http response {0}" + System.Text.Json.JsonSerializer.Serialize(response));
+            logger.LogInformation("http response {0}" + System.Text.Json.JsonSerializer.Serialize(response));
 
             response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync(cancellationToken);

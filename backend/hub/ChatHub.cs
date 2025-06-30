@@ -2,9 +2,12 @@
 using Microsoft.AspNetCore.SignalR;
 using Server_chat.contract;
 using Server_chat.domain.repositories;
+using Server_chat.Domain.enities;
 using Server_chat.hub;
 using Server_chat.vm.authentication.meet;
 using Server_chat.vm.message;
+using Server_chat.vm.user;
+using System;
 using System.Collections.Concurrent;
 
 
@@ -27,6 +30,13 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories,
         }
         await base.OnConnectedAsync();
     }
+    public async Task GetUserChat(string UserMeet)
+    {
+        var connectionId = Context.ConnectionId;
+        var User = await userRepositories.GetUserMeet(UserMeet);
+        var map = mapper.Map<UserResponse>(User);
+        await Clients.Client(connectionId).SendUserMeet(map);
+    }
     public async Task SyncUser(SyncUser user)
     {
         var connectionId = Context.ConnectionId;
@@ -36,7 +46,7 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories,
             Name = user.Name,
             UserMeet = user.UserMeet,
         });
-        await Clients.Client(connectionId).sync(guid.Value);
+        await Clients.Client(connectionId).sync(guid.Value, user.UserMeet);
     }
     public async Task SendPrivateMessage(Guid user, string message)
     {

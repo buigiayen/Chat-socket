@@ -10,6 +10,9 @@ using System.Data;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 
 builder.Services.AddOpenApi();
 builder.Services.AddCors();
