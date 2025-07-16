@@ -1,14 +1,18 @@
+"use client";
 import { useEffect, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
 
-
-export function useSignalR(hubUrl = "/chathub", onConnected?: () => void) {
+export function useSignalR({
+  hubUrl,
+  onConnected,
+  Token,
+}: {
+  hubUrl?: string;
+  onConnected?: () => void;
+  Token?: string ;
+}) {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
-  hubUrl =
-    process.env.NEXT_PUBLIC_URL +
-    "/chathub" +
-    "?Authorization=" +
-    localStorage?.getItem("token");
+  hubUrl = process.env.NEXT_PUBLIC_URL + "/chathub" + "?Authorization=" + Token;
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl)

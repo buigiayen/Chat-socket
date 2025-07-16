@@ -13,7 +13,6 @@ const LoginPage: React.FC = () => {
     login: useMutation({
       mutationKey: ["Login"],
       mutationFn: getLoginToken,
-      onSuccess: (data) => {},
     }),
   };
   const onFinish = async (values: { code: string; password: string }) => {
@@ -28,6 +27,7 @@ const LoginPage: React.FC = () => {
           user_meet: data.userInfo.data.id,
           name: data.userInfo.data.name,
           user_id: data.userInfo.userID,
+          token: data.token,
         },
       });
       Router.push("/chat");

@@ -3,10 +3,10 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
 
 type State = {
-  UserInfo?: InitialStates.Title;
+  UserInfo?: InitialStates.User;
 };
 
-type Action = { type: "SET_INIT"; payload: InitialStates.Title };
+type Action = { type: "SET_INIT"; payload: InitialStates.User };
 
 const initialState: State = {};
 
@@ -19,7 +19,6 @@ function globalReducer(state: State, action: Action): State {
   switch (action.type) {
     case "SET_INIT":
       return { ...state, UserInfo: action.payload };
-
     default:
       return state;
   }

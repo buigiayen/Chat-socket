@@ -22,7 +22,7 @@ interface UnreadCount {
   [userId: string]: number;
 }
 
-export const ChatUI = () => {
+export const ChatUI = ({ tokenPrams }: { tokenPrams?: string }) => {
   const global = useGlobal();
   const centerID = global.state.UserInfo?.centerID;
   const FromUserID = global.state.UserInfo?.user_id;
@@ -43,12 +43,10 @@ export const ChatUI = () => {
   // ✅ State để lưu trữ số tin nhắn chưa đọc
   const [unreadCounts, setUnreadCounts] = React.useState<UnreadCount>({});
 
-  // ✅ State để track tin nhắn cuối cùng đã đọc của mỗi user
-  const [lastReadMessages, setLastReadMessages] = React.useState<{
-    [userId: string]: string;
-  }>({});
-
-  const connectionRef = useSignalR();
+  const connectionRef = useSignalR({
+    hubUrl: "",
+    Token: tokenPrams ?? global.state.UserInfo?.token,
+  });
   const { token } = theme.useToken();
 
   const style = {
@@ -62,12 +60,6 @@ export const ChatUI = () => {
     setUnreadCounts((prev) => ({
       ...prev,
       [userId]: 0,
-    }));
-
-    // Lưu timestamp của tin nhắn cuối cùng đã đọc
-    setLastReadMessages((prev) => ({
-      ...prev,
-      [userId]: Date.now().toString(),
     }));
   };
 
@@ -88,20 +80,20 @@ export const ChatUI = () => {
       gcTime: 10000,
       networkMode: "online",
       queryFn: async () => {
-        var response = await getItemUserCenter({ centerID: centerID });
+        const response = await getItemUserCenter({ centerID: centerID });
         const data =
           response
             ?.filter((r) => r.socketID !== connectionRef.current?.connectionId)
             .map<Conversation>((rs: UserChat.UserCenter, i: number) => ({
               ...conversations,
-              key: rs.userID ?? i.toString(),
+              key: rs?.userID ?? i.toString(),
               label: (
                 <div className="flex justify-between items-center w-full">
                   <span className="text-sm text-gray-800 font-bold">
-                    {rs.name}
+                    {rs?.name}
                   </span>
                   {/* ✅ Hiển thị số tin nhắn chưa đọc */}
-                  {unreadCounts[rs.userID || ""] > 0 && (
+                  {unreadCounts[rs?.userID || ""] > 0 && (
                     <Badge
                       count={unreadCounts[rs.userID || ""]}
                       size="small"
@@ -139,7 +131,7 @@ export const ChatUI = () => {
       queryFn: async () => {
         if (!sendUserConnectionID) return [];
 
-        var response = await getMessageByUser({
+        const response = await getMessageByUser({
           ToUser: sendUserConnectionID,
         });
 

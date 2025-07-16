@@ -1,4 +1,4 @@
-// src/infrastructure/api/axiosInstance.ts
+"use client";
 import { message, notification } from "antd";
 import axios from "axios";
 
