@@ -1,6 +1,6 @@
-﻿namespace Server_chat.contract
+﻿namespace Server_chat.extensions.notification
 {
-    public class ErrorConst
+    public class ErrorNotification
     {
         public const string ReturnLogin = "Yêu cầu đăng nhập";
     }

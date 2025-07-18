@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
-using Server_chat.contract;
 using Server_chat.domain.repositories;
 using Server_chat.Domain.enities;
+using Server_chat.extensions.notification;
 using Server_chat.hub;
 using Server_chat.vm.authentication.meet;
 using Server_chat.vm.message;
@@ -23,7 +23,7 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories,
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
         if (currenUser.Item1.HasValue)
         {
-            string message = string.Format(HubMessage.SendNotificationStartMessage, currenUser.Item2);
+            string message = string.Format(HubNotification.SendNotificationStartMessage, currenUser.Item2);
             await userRepositories.IsUserStateAsync(currenUser.Item1.Value, connectionId, true);
             await Clients.All.NotificationSystem(connectionId, message);
             _connections.TryAdd(Context.ConnectionId, currenUser.Item1.Value);
@@ -60,7 +60,7 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories,
     {
         var connectionId = Context.ConnectionId;
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
-        string message = string.Format(HubMessage.SendNotificationStartMessage, currenUser.Item2);
+        string message = string.Format(HubNotification.SendNotificationStartMessage, currenUser.Item2);
         await Clients.All.NotificationSystem(connectionId, message);
     }
 
@@ -87,7 +87,7 @@ public class ChatHub(ICurrenUserRepositories currenUserRepositories,
     {
         var connectionId = Context.ConnectionId;
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
-        string message = string.Format(HubMessage.SendNotificationOffMessage, currenUser);
+        string message = string.Format(HubNotification.SendNotificationOffMessage, currenUser);
         await userRepositories.IsUserStateAsync(currenUser.Item1.Value, currenUser.Item2, false);
         _connections.TryRemove(Context.ConnectionId, out _);
         await base.OnDisconnectedAsync(exception);

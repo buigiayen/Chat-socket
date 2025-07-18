@@ -1,5 +1,6 @@
 ﻿using Server_chat.contract;
 using Server_chat.domain.repositories;
+using Server_chat.extensions.notification;
 using System.IdentityModel.Tokens.Jwt;
 namespace Server_chat.domain.Handler
 {
@@ -19,10 +20,10 @@ namespace Server_chat.domain.Handler
 
             var jwtToken = handler.ReadJwtToken(token);
             var userIdClaim = jwtToken.Claims.FirstOrDefault(c =>
-                c.Type == contract.AuthenticationConst.SubID);
+                c.Type == AuthenticationConst.SubID);
 
             if (userIdClaim == null)
-                throw new UnauthorizedAccessException(ErrorConst.ReturnLogin);
+                throw new UnauthorizedAccessException(ErrorNotification.ReturnLogin);
             var getCurrenUserMeet = await userRepositories.GetUserMeet(userIdClaim.Value);
             return getCurrenUserMeet.UserID;
         }
@@ -41,7 +42,7 @@ namespace Server_chat.domain.Handler
 
             var jwtToken = handler.ReadJwtToken(token);
             var userIdClaim = jwtToken.Claims.FirstOrDefault(c =>
-                c.Type == contract.AuthenticationConst.SubID);
+                c.Type == AuthenticationConst.SubID);
 
             if (userIdClaim == null)
                 return (null, string.Empty);
