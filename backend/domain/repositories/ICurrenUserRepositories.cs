@@ -4,5 +4,6 @@
     {
         Task<Guid?> GetCurrentUserIDAsync();
         Task<(Guid?, string)> GetCurrentUserSocketAsync();
+        Task<string> GetTokenAsync();
     }
 }

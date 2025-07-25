@@ -12,10 +12,6 @@ const createAxiosInstance = (baseURL?: string) => {
   });
 
   config.interceptors.request.use((request) => {
-    request.headers.set(
-      "Authorization",
-      "bearer " + localStorage.getItem("token") || null
-    );
     return request;
   });
   config.interceptors.response.use(

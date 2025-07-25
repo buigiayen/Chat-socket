@@ -31,9 +31,6 @@ namespace Server_chat.apis
             return app;
         }
 
-     
-
-
         public static async Task<Results<Ok<IEnumerable<SearchMessageResponse>>, ProblemHttpResult>> GetItemsByIds([AsParameters] SearchMessageRequest sendMessage, [AsParameters] MessageServices services)
         {
             var data = await services.Mediator.Send(sendMessage);

@@ -25,7 +25,7 @@ namespace Server_chat.domain.Handler
             if (userIdClaim == null)
                 throw new UnauthorizedAccessException(ErrorNotification.ReturnLogin);
             var getCurrenUserMeet = await userRepositories.GetUserMeet(userIdClaim.Value);
-            return getCurrenUserMeet.UserID;
+            return getCurrenUserMeet?.UserID;
         }
 
         public async Task<(Guid?, string)> GetCurrentUserSocketAsync()
@@ -48,7 +48,14 @@ namespace Server_chat.domain.Handler
                 return (null, string.Empty);
 
             var socketCurren = await userRepositories.GetUserMeet(userIdClaim.Value);
-            return (socketCurren.UserID, socketCurren.SocketID);
+            return (socketCurren?.UserID, socketCurren?.SocketID);
+        }
+
+        public async Task<string> GetTokenAsync()
+        {
+            httpContextAccessor.HttpContext.Request.Headers.TryGetValue("Authorization", out var authHeader);
+            var token = authHeader.ToString().Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase).Trim();
+            return token;
         }
     }
 }

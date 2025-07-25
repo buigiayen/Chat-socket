@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using Server_chat.domain.enities;
 using Server_chat.domain.repositories;
+using Server_chat.Domain.enities;
+using System.Data;
 
 namespace Server_chat.vm.authentication.meet
 {
@@ -10,7 +12,10 @@ namespace Server_chat.vm.authentication.meet
         IConfiguration configuration,
         IUserRepositories userRepositories,
         ILogger<AuthenticationHandler> logger)
-        : IRequestHandler<AuthenticationRequest, AuthenticationResponse>
+        : IRequestHandler<AuthenticationRequest, AuthenticationResponse>,
+        IRequestHandler<TokenRequest, AuthenticationResponse>
+
+
     {
         public async Task<AuthenticationResponse> Handle(AuthenticationRequest request, CancellationToken cancellationToken)
         {
@@ -30,6 +35,11 @@ namespace Server_chat.vm.authentication.meet
             logger.LogInformation("http response {0}" + System.Text.Json.JsonSerializer.Serialize(response));
 
             response.EnsureSuccessStatusCode();
+            if(response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                logger.LogError("Authentication failed with status code: {0}", response.StatusCode);
+                throw new UnauthorizedAccessException("User của bạn không hợp lệ!");
+            }
             var responseString = await response.Content.ReadAsStringAsync(cancellationToken);
             var authResponse = System.Text.Json.JsonSerializer.Deserialize<AuthenticationMeet>(responseString, new System.Text.Json.JsonSerializerOptions
             {
@@ -62,6 +72,8 @@ namespace Server_chat.vm.authentication.meet
             };
             return mapper ?? new AuthenticationResponse { status = "error", message = "Null response", code = -1 };
         }
+
+
         private static T? DecodeJwtPayload<T>(string jwt)
         {
             if (string.IsNullOrWhiteSpace(jwt)) return default;
@@ -79,5 +91,25 @@ namespace Server_chat.vm.authentication.meet
             });
         }
 
+        public async Task<AuthenticationResponse> Handle(TokenRequest request, CancellationToken cancellationToken)
+        {
+            var decode = DecodeJwtPayload<JWTMeet>(request.Token);
+            Guid? userID = await userRepositories.SyncUser(new Domain.enities.User
+            {
+                Name = decode.data.name,
+                CenterID = decode.data.identification,
+                UserMeet = Int32.Parse(decode.sub),
+            });
+            decode.userID = userID.Value;
+            var mapper = new AuthenticationResponse
+            {
+                code = 200,
+                UserInfo = decode,
+                message = "Đăng nhập thành công",
+                status = "ok",
+                token = request.Token,
+            };
+            return mapper ?? new AuthenticationResponse { status = "error", message = "Null response", code = -1 };
+        }
     }
 }

@@ -17,7 +17,6 @@ const LoginPage: React.FC = () => {
   };
   const onFinish = async (values: { code: string; password: string }) => {
     const data = await api.login.mutateAsync(values);
-    console.log(data);
     if (data.token && data.userInfo) {
       localStorage.setItem("token", data.token);
       global.dispatch({
@@ -35,16 +34,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 400,
-        margin: "80px auto",
-        padding: 24,
-        background: "#fff",
-        borderRadius: 8,
-        boxShadow: "0 2px 8px #f0f1f2",
-      }}
-    >
+    <div className="p-4 w-full max-w-md mx-auto">
       <Form
         name="login"
         layout="vertical"
@@ -75,7 +65,7 @@ const LoginPage: React.FC = () => {
             block
             loading={api.login.isPending}
           >
-            Login
+            Đăng nhập
           </Button>
         </Form.Item>
         <small>Sử dụng tài khoản meet để truy cập</small>

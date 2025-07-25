@@ -1,26 +1,47 @@
 "use client";
-import { useLayoutEffect } from "react";
+import { useEffect } from "react";
 import ChatUI from "./components/chatUI";
+import { useSearchParams } from "next/navigation";
+import { postCheckAuthentication } from "@/services/users/user.services";
+import { useMutation } from "@tanstack/react-query";
 import { useGlobal } from "@/provider/global.Context";
-import { useParams } from "next/navigation";
 
 export default function Home() {
-  const { token } = useParams();
+  const searchParams = useSearchParams();
   const global = useGlobal();
-  useLayoutEffect(() => {
-    console.log(token)
-    if (!token) {
-      localStorage.setItem("token", token ?? "");
-      global.dispatch({
-        payload: { ...global.state.UserInfo, token: token },
-        type: "SET_INIT",
-      });
-    } else {
+  const api = {
+    checkAuthentication: useMutation({
+      mutationKey: ["CheckAuthentication", searchParams.get("token")],
+      mutationFn: postCheckAuthentication,
+      onSuccess: (data) => {
+        if (data.token && data.userInfo) {
+          localStorage.setItem("token", data.token);
+          global.dispatch({
+            type: "SET_INIT",
+            payload: {
+              centerID: data.userInfo.data.identification,
+              user_meet: data.userInfo.data.id,
+              name: data.userInfo.data.name,
+              user_id: data.userInfo.userID,
+              token: data.token,
+            },
+          });
+        }
+        window.location.href = "/chat";
+      },
+    }),
+  };
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+    if (token) {
+      api.checkAuthentication.mutate({ token: token });
     }
-  }, [token]);
+  }, [searchParams]);
+
   return (
     <main className="h-full  ">
-      <ChatUI tokenPrams={token?.toLocaleString() ?? undefined}></ChatUI>
+      <ChatUI tokenPrams={searchParams.get("token") ?? undefined}></ChatUI>
     </main>
   );
 }

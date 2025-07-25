@@ -2,6 +2,10 @@
 
 namespace Server_chat.vm.authentication.meet
 {
+    public class TokenRequest(string token) : IRequest<AuthenticationResponse>
+    {
+        public string Token { get; set; } = token ?? string.Empty;
+    }
     public class AuthenticationRequest : IRequest<AuthenticationResponse>
     {
         public string code { get; set; }

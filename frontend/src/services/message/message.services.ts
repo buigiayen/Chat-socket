@@ -7,6 +7,9 @@ export const getMessageByUser = async (params: {
   return (
     await axiosInstance.get<MessageOnline.Message[]>("/api/message/items", {
       params: params,
+      headers: {
+        Authorization: "bearer " + localStorage.getItem("token") || null,
+      },
     })
   ).data;
 };
