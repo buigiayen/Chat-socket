@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import ChatUI from "./components/chatUI";
 import { useSearchParams } from "next/navigation";
 import { postCheckAuthentication } from "@/services/users/user.services";
@@ -32,16 +32,17 @@ export default function Home() {
     }),
   };
 
-  useEffect(() => {
+  const Token = useMemo(() => {
     const token = searchParams.get("token");
     if (token) {
       api.checkAuthentication.mutate({ token: token });
     }
+    return token;
   }, [searchParams]);
 
   return (
-    <main className="h-full  ">
-      <ChatUI tokenPrams={searchParams.get("token") ?? undefined}></ChatUI>
+    <main className="bg-[#f3f3f3] p-1">
+      <ChatUI tokenPrams={Token ?? undefined} />
     </main>
   );
 }

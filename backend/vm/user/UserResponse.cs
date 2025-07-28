@@ -5,7 +5,7 @@
         /// <summary>
         /// Id của người nhận tin nhắn
         /// </summary>
-        public Guid UserID { get; set; }
+        public Guid? UserID { get; set; }
         /// <summary>
         /// userame của người dùng
         /// </summary>
@@ -23,6 +23,6 @@
         /// <summary>
         ///  Id socket của người dùng, nếu có
         /// </summary>
-        public string SocketID { get; set; } 
+        public string? SocketID { get; set; } 
     }
 }
