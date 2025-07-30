@@ -14,7 +14,7 @@ namespace Server_chat.apis
     public static class MessageApis
     {
 
-        const string summary = "Send Message APIs";
+        const string summary = "Tin nhắn";
 
         public static IEndpointRouteBuilder MapMessageApis(this IEndpointRouteBuilder app)
         {
@@ -25,13 +25,11 @@ namespace Server_chat.apis
                          .WithSummary(summary)
                          .WithDescription("Tìm kiếm tin nhắn")
                          .WithTags("message");
-
-           
-
             return app;
         }
 
-        public static async Task<Results<Ok<IEnumerable<SearchMessageResponse>>, ProblemHttpResult>> GetItemsByIds([AsParameters] SearchMessageRequest sendMessage, [AsParameters] MessageServices services)
+        public static async Task<Results<Ok<IEnumerable<SearchMessageResponse>>, ProblemHttpResult>>
+            GetItemsByIds([AsParameters] SearchMessageRequest sendMessage, [AsParameters] MessageServices services)
         {
             var data = await services.Mediator.Send(sendMessage);
             return TypedResults.Ok(data);

@@ -24,5 +24,7 @@
         ///  Id socket của người dùng, nếu có
         /// </summary>
         public string? SocketID { get; set; } 
+        public string? Image { get; set; }
+        public int MesssageNotRead { get; set; }
     }
 }

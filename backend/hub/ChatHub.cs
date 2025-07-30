@@ -63,6 +63,7 @@ public class ChatHub(
             CenterID = user.CenterID,
             Name = user.Name,
             UserMeet = user.UserMeet,
+            Image = user.ImageUrl ?? "https://img.icons8.com/material/344/user-male-circle--v1.png"
         });
         await Clients.Client(connectionId).sync(guid.Value, user.UserMeet);
     }
@@ -71,7 +72,7 @@ public class ChatHub(
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
         await MessageRepositories.InsertMessage(new Server_chat.Domain.enities.message { ToUser = user, FromUser = currenUser.UserID.Value, MessageText = message });
         string toID = await userRepositories.GetConnectionIdAsync(user);
-        await Clients.Client(toID).Message(Context.ConnectionId, message);
+        await Clients.Client(toID).Message(currenUser.UserID, message);
     }
     public async Task SendNotificationMessage()
     {
@@ -96,6 +97,7 @@ public class ChatHub(
         var connectionId = Context.ConnectionId;
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
         var message = await MessageRepositories.MessageUser(currenUser.UserID.Value, ToUser, DateRange.Value.Date, DateRange.Value.AddDays(1).Date);
+        await MessageRepositories.UpdateMessageStatusAsync(currenUser.UserID.Value, ToUser, true);
         var map = mapper.Map<IEnumerable<SearchMessageResponse>>(message);
         await Clients.Client(connectionId).GetHistoryMessage(map);
     }

@@ -16,5 +16,6 @@ namespace Server_chat.vm.authentication.meet
         public string Name { get; set; } // Tên người dùng
         public string CenterID { get; set; } // Mã trung tâm người dùng
         public int UserMeet { get; set; } // socket id của người dùng
+        public string ImageUrl { get; set; }
     }
 }

@@ -8,7 +8,7 @@ namespace Server_chat.hub
 {
     public interface IHub_Message
     {
-        Task Message(string? FromID,string message);
+        Task Message(Guid? FromID,string message);
         Task NotificationSystem(string connectionId, UserResponse user ,string message);
         Task SendPublicSystem(string message);
         Task UpdateConnections(IEnumerable<User> users);

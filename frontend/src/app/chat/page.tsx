@@ -29,6 +29,10 @@ export default function Home() {
         }
         window.location.href = "/chat";
       },
+      onError: (error) => {
+        console.log(error);
+        window.location.href = "/login";
+      },
     }),
   };
 
@@ -41,7 +45,7 @@ export default function Home() {
   }, [searchParams]);
 
   return (
-    <main className="bg-[#f3f3f3] p-1">
+    <main className="bg-[#f3f3f3]">
       <ChatUI tokenPrams={Token ?? undefined} />
     </main>
   );

@@ -53,8 +53,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         IssuerSigningKey = builder.Environment.IsProduction() ? new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable(EnvConst.IssuerSigningKeyProcduction))) : new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetSection("secured:signature").Value))
     };
 });
-
-
+Console.WriteLine(builder.Environment.IsProduction() ? Environment.GetEnvironmentVariable(EnvConst.URL_MEET) : builder.Configuration.GetSection("Url:meet").Value);
+Console.WriteLine(builder.Environment.IsProduction() ? Environment.GetEnvironmentVariable(EnvConst.SqlEnviromentProduction) : builder.Configuration.GetConnectionString("sqlconnection"));
 var app = builder.Build();
 
 

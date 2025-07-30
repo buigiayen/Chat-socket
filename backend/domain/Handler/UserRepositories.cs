@@ -2,8 +2,6 @@
 using Server_chat.domain.repositories;
 using Server_chat.Domain.enities;
 using System.Data;
-using System.Net.Sockets;
-
 
 namespace Server_chat.domain.Handler
 {
@@ -26,14 +24,15 @@ namespace Server_chat.domain.Handler
         }
         public async Task<IEnumerable<User>> GetAllConnectedUserByCenterIDAsync(string CenterID, Guid? UserNotIn)
         {
-            string sql = "SELECT * FROM [User] WHERE CenterID = @CenterID ";
+            string checkCountIsRead = "(select count(message.messageID) from [dbo].[message] where FromUser = u.UserID  and ToUser = @UserNotIn and IsRead = 0 and IsRead = 0 )";
+
+            string sql = $"SELECT u.*, {checkCountIsRead} IsNotRead FROM [User] u WHERE CenterID = @CenterID ";
             if (UserNotIn.HasValue) { sql += " and [UserID] <> @UserNotIn"; }
              sql += " order by isOnline desc";
-            var query = await dbConnection.QueryAsync<User>(sql, new { CenterID = CenterID, UserNotIn = UserNotIn });
+            var query =     await dbConnection.QueryAsync<User>(sql, new { CenterID = CenterID, UserNotIn = UserNotIn });
             return query;
-
         }
-
+    
         public async Task<Guid?> SyncUser(User user)
         {
             Guid? newID = Guid.NewGuid();
@@ -54,8 +53,8 @@ namespace Server_chat.domain.Handler
                             END
                             ELSE
                             BEGIN
-                                INSERT INTO [dbo].[User] (UserID, [Name], [CenterID], [UserMeet])
-                                VALUES (@ID, @Name, @CenterID, @UserMeet)
+                                INSERT INTO [dbo].[User] (UserID, [Name], [CenterID], [UserMeet],[Image])
+                                VALUES (@ID, @Name, @CenterID, @UserMeet,@Image)
                             END
 
                             SELECT @ID AS Result;";

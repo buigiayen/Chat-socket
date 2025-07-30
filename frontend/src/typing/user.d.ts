@@ -37,5 +37,6 @@ namespace UserChat {
     isOnline: boolean;
     centerID: string;
     socketID: string;
+    image: string
   }
 }
