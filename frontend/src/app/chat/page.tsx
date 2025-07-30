@@ -1,12 +1,11 @@
 "use client";
-import { useEffect, useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import ChatUI from "./components/chatUI";
 import { useSearchParams } from "next/navigation";
 import { postCheckAuthentication } from "@/services/users/user.services";
 import { useMutation } from "@tanstack/react-query";
 import { useGlobal } from "@/provider/global.Context";
-
-export default function Home() {
+const HomeChat = () => {
   const searchParams = useSearchParams();
   const global = useGlobal();
   const api = {
@@ -43,10 +42,14 @@ export default function Home() {
     }
     return token;
   }, [searchParams]);
-
+  return <ChatUI tokenPrams={Token ?? undefined} />;
+};
+export default function Home() {
   return (
     <main className="bg-[#f3f3f3]">
-      <ChatUI tokenPrams={Token ?? undefined} />
+      <Suspense>
+        <HomeChat></HomeChat>
+      </Suspense>
     </main>
   );
 }

@@ -11,6 +11,7 @@ import { useGlobal } from "@/provider/global.Context";
 import UserCenter from "./user.chat";
 import ButtonInfoChat from "./buttonUserInfo.chat";
 import '@ant-design/v5-patch-for-react-19';
+
 // ✅ Thêm interface cho unread messages
 interface UnreadCount {
   [userId: string]: number;
@@ -18,14 +19,11 @@ interface UnreadCount {
 
 export const ChatUI = ({ tokenPrams }: { tokenPrams?: string }) => {
   const global = useGlobal();
-  const [scrollTop, setScrollTop] = React.useState(0);
   const listRef = React.useRef<GetRef<typeof Bubble.List>>(null);
   const chatContainerRef = React.useRef<HTMLDivElement>(null);
-
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
       const target = e.target as HTMLDivElement;
-      setScrollTop(target.scrollTop);
 
       // Kiểm tra xem người dùng có đang cuộn lên xem tin nhắn cũ không
       const isAtBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 50;
@@ -40,9 +38,11 @@ export const ChatUI = ({ tokenPrams }: { tokenPrams?: string }) => {
   );
   const centerID = global.state.UserInfo?.centerID;
   const FromUserID = global.state.UserInfo?.user_id;
+
   const [value, setValue] = React.useState("");
   const [choosenPerson, setChoosenPerson] =
     React.useState<UserChat.UserCenter>();
+
   const [Persons, setPersons] = React.useState<UserChat.UserCenter[]>();
 
   const [BubbleDataType, setBubbleDataType] =
@@ -78,13 +78,7 @@ export const ChatUI = ({ tokenPrams }: { tokenPrams?: string }) => {
         bubbleContainer.scrollTop = bubbleContainer.scrollHeight;
       }
 
-      // Fallback: tìm tất cả container có scroll
-      const scrollContainers = document.querySelectorAll('[style*="overflow-y: auto"], [style*="overflow: auto"]');
-      scrollContainers.forEach((container) => {
-        if (container.scrollHeight > container.clientHeight) {
-          container.scrollTop = container.scrollHeight;
-        }
-      });
+
     }, 150);
   };
 
@@ -96,19 +90,17 @@ export const ChatUI = ({ tokenPrams }: { tokenPrams?: string }) => {
       response?.map<BubbleDataType>((r: MessageOnline.Message) => ({
         key: r.messageID?.toString() || Date.now().toString(),
         content: r.messageText,
-        role: r.fromUser === FromUserID ? "user" : "assistant",
-        placement: r.fromUser === FromUserID ? "end" : "start",
-        avatar: (
-          <Avatar src={choosenPerson?.image}></Avatar>
-        ),
+        placement: r.fromUser == FromUserID ? "end" : "start",
+        avatar: <Avatar src={
+          r.fromUser == FromUserID ? 'https://console.emcvietnam.vn:9000/public-emc/user.png' :
+            Persons?.filter(p => p.userID == r.fromUser)[0]?.image}></Avatar>
       })) ?? [];
-    setBubbleDataType(mapMessage ?? []);
 
+    setBubbleDataType(mapMessage ?? []);
     // Tự động cuộn xuống dưới sau khi load tin nhắn
     setTimeout(() => {
       scrollToBottom();
     }, 100);
-
     return mapMessage;
   };
 
@@ -128,9 +120,12 @@ export const ChatUI = ({ tokenPrams }: { tokenPrams?: string }) => {
       refetchIntervalInBackground: true,
       gcTime: 10000,
       queryFn: async () => {
-        const ItemUser = await getItemUserCenter({ centerID: centerID });
-        setPersons(ItemUser);
-        return ItemUser;
+        if (centerID) {
+          const ItemUser = await getItemUserCenter({ centerID: centerID });
+          setPersons(ItemUser);
+          return ItemUser;
+        }
+
       },
     }),
   };
@@ -178,16 +173,17 @@ export const ChatUI = ({ tokenPrams }: { tokenPrams?: string }) => {
           } else {
             playNotificationSound();
             incrementUnreadCount(senderUserId);
+            notification.info({
+              message: `${senderUser?.name} đã gửi tin cho bạn`,
+              description:
+                message,
+              duration: 3,
+              showProgress: true,
+            });
           }
 
         }
-        notification.info({
-          message: `${senderUser?.name} đã gửi tin cho bạn`,
-          description:
-            message,
-          duration: 3000,
 
-        });
       };
 
       connectionRef.current.on("Message", handleMessage);

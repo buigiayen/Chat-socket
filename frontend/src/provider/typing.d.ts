@@ -6,5 +6,6 @@ namespace InitialStates {
     user_meet?: string;
     user_id?: string;
     token?: string;
+    image?: string;
   };
 }

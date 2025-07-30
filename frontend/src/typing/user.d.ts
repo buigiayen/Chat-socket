@@ -11,6 +11,7 @@ namespace UserMeet {
     userInfo: UserInfo;
     code: number;
     token: string;
+    image: string;
   }
 
   interface UserInfo {
@@ -21,6 +22,7 @@ namespace UserMeet {
     exp: number;
     data: Data;
     userID: string;
+    image: string;
   }
 
   interface Data {
@@ -38,5 +40,6 @@ namespace UserChat {
     centerID: string;
     socketID: string;
     image: string
+    messsageNotRead: number
   }
 }
