@@ -19,7 +19,7 @@ namespace Server_chat.vm.message
             var currenID = await currenUserRepositories.GetCurrentUserIDAsync();
             await messageRepositories.UpdateMessageStatusAsync(currenID.Value, request.ToUser, true);
             if (!request.timeRanger.HasValue) { request.timeRanger = DateTime.Now; }
-            var Data = await messageRepositories.MessageUser(currenID.Value, request.ToUser, request.timeRanger.Value.Date, request.timeRanger.Value.AddDays(1).Date);
+            var Data = await messageRepositories.MessageUser(currenID.Value, request.ToUser, request.timeRanger.Value.AddDays(-7).Date, request.timeRanger.Value.AddDays(+1).Date);
             var map = mapper.Map<IEnumerable<SearchMessageResponse>>(Data);
             return map;
         }
