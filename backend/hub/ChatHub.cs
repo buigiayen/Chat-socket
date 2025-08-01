@@ -70,9 +70,18 @@ public class ChatHub(
     public async Task SendPrivateMessage(Guid user, string message)
     {
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
-        await MessageRepositories.InsertMessage(new Server_chat.Domain.enities.message { ToUser = user, FromUser = currenUser.UserID.Value, MessageText = message });
+       
         string toID = await userRepositories.GetConnectionIdAsync(user);
-        await Clients.Client(toID).Message(currenUser.UserID, message);
+        if (string.IsNullOrEmpty(message))
+        {
+            await Clients.Client(toID).Message(currenUser.UserID, string.Format("{0} - {1}", currenUser.CenterID, DateTime.Now.ToString("dd/MM/yyyy HH:mm")));
+        }
+        else
+        {
+            await MessageRepositories.InsertMessage(new Server_chat.Domain.enities.message { ToUser = user, FromUser = currenUser.UserID.Value, MessageText = message });
+            await Clients.Client(toID).Message(currenUser.UserID, message);
+        }
+
     }
     public async Task SendNotificationMessage()
     {
@@ -96,7 +105,7 @@ public class ChatHub(
         }
         var connectionId = Context.ConnectionId;
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
-        var message = await MessageRepositories.MessageUser(currenUser.UserID.Value, ToUser, DateRange.Value.Date, DateRange.Value.AddDays(1).Date);
+        var message = await MessageRepositories.MessageUser(currenUser.UserID.Value, ToUser, DateRange.Value.AddDays(-350).Date, DateRange.Value.AddDays(1).Date);
         await MessageRepositories.UpdateMessageStatusAsync(currenUser.UserID.Value, ToUser, true);
         var map = mapper.Map<IEnumerable<SearchMessageResponse>>(message);
         await Clients.Client(connectionId).GetHistoryMessage(map);
@@ -120,6 +129,6 @@ public class ChatHub(
             }
         }
 
-       
+
     }
 }
