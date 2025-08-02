@@ -58,7 +58,8 @@ public class ChatHub(
             CenterID = user.CenterID,
             Name = user.Name,
             UserMeet = user.UserMeet,
-            Image = user.ImageUrl ?? "https://img.icons8.com/material/344/user-male-circle--v1.png"
+            Image = user.ImageUrl ?? "https://img.icons8.com/material/344/user-male-circle--v1.png",
+            TypeUser = user.TypeUser,
         });
         await Clients.Client(connectionId).sync(guid.Value, user.UserMeet);
     }

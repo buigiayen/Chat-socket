@@ -41,5 +41,6 @@ namespace UserChat {
     socketID: string;
     image: string
     messsageNotRead: number
+    typeUser: number
   }
 }

@@ -1,4 +1,6 @@
-﻿namespace Server_chat.Domain.enities
+﻿using Server_chat.domain.enities.enums;
+
+namespace Server_chat.Domain.enities
 {
     public record class User
     {
@@ -11,6 +13,7 @@
         public int UserMeet { get; set; } // socket id của người dùng
         public string Image { get; set; }
         public int IsNotRead { get; set; } // Số tin nhắn chưa đọc với user này 
+        public UserEnums TypeUser { get; set; }
 
     }
 }

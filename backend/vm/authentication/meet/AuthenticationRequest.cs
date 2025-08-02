@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Server_chat.domain.enities.enums;
 
 namespace Server_chat.vm.authentication.meet
 {
@@ -17,5 +18,6 @@ namespace Server_chat.vm.authentication.meet
         public string CenterID { get; set; } // Mã trung tâm người dùng
         public int UserMeet { get; set; } // socket id của người dùng
         public string ImageUrl { get; set; }
+        public UserEnums TypeUser { get; set; }
     }
 }

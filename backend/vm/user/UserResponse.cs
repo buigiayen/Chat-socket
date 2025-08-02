@@ -1,4 +1,6 @@
-﻿namespace Server_chat.vm.user
+﻿using Server_chat.domain.enities.enums;
+
+namespace Server_chat.vm.user
 {
     public sealed class UserResponse
     {
@@ -26,5 +28,6 @@
         public string? SocketID { get; set; } 
         public string? Image { get; set; }
         public int MesssageNotRead { get; set; }
+        public UserEnums TypeUser { get; set; }
     }
 }

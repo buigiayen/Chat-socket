@@ -53,8 +53,8 @@ namespace Server_chat.domain.Handler
                             END
                             ELSE
                             BEGIN
-                                INSERT INTO [dbo].[User] (UserID, [Name], [CenterID], [UserMeet],[Image])
-                                VALUES (@ID, @Name, @CenterID, @UserMeet,@Image)
+                                INSERT INTO [dbo].[User] (UserID, [Name], [CenterID], [UserMeet],[Image], [TypeUser])
+                                VALUES (@ID, @Name, @CenterID, @UserMeet,@Image, @TypeUser)
                             END
 
                             SELECT @ID AS Result;";
