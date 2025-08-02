@@ -8,5 +8,6 @@
         public Guid ToUser { get; set; } // Id của người nhận tin nhắn
         public Guid FromUser { get; set; } // Id của người gửi tin nhắn
         public string MessageText {  get; set; }
+        
     }
 }

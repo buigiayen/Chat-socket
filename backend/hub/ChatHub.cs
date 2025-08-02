@@ -1,17 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using Server_chat.domain.repositories;
-using Server_chat.Domain.enities;
 using Server_chat.extensions.notification;
 using Server_chat.hub;
 using Server_chat.vm.authentication.meet;
 using Server_chat.vm.message;
 using Server_chat.vm.user;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 
 public class ChatHub(
@@ -70,18 +65,9 @@ public class ChatHub(
     public async Task SendPrivateMessage(Guid user, string message)
     {
         var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
-       
         string toID = await userRepositories.GetConnectionIdAsync(user);
-        if (string.IsNullOrEmpty(message))
-        {
-            await Clients.Client(toID).Message(currenUser.UserID, string.Format("{0} - {1}", currenUser.CenterID, DateTime.Now.ToString("dd/MM/yyyy HH:mm")));
-        }
-        else
-        {
-            await MessageRepositories.InsertMessage(new Server_chat.Domain.enities.message { ToUser = user, FromUser = currenUser.UserID.Value, MessageText = message });
-            await Clients.Client(toID).Message(currenUser.UserID, message);
-        }
-
+        await MessageRepositories.InsertMessage(new Server_chat.Domain.enities.message { ToUser = user, FromUser = currenUser.UserID.Value, MessageText = message });
+        await Clients.Client(toID).Message(currenUser.UserID, message);
     }
     public async Task SendNotificationMessage()
     {
@@ -112,7 +98,7 @@ public class ChatHub(
     }
     public override async Task OnDisconnectedAsync(Exception? exception = null)
     {
-        if (exception != null)
+        if (exception == null)
         {
             var connectionId = Context.ConnectionId;
             var currenUser = await currenUserRepositories.GetCurrentUserSocketAsync();
