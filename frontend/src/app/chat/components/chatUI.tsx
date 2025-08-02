@@ -422,7 +422,7 @@ export const ChatUI = ({ tokenPrams }: { tokenPrams?: string }) => {
               <Sender
                 className="bg-[#fff]"
                 value={value}
-                disabled={!choosenPerson?.socketID}
+                disabled={!choosenPerson?.userID}
                 onChange={(nextVal) => {
                   setValue(nextVal);
                 }}
